@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import hashlib
-import os
 import shutil
 from pathlib import Path
 
-from pulsecrawl.adapters.outbound.filesystem.atomic import _fsync_directory
+from pulsecrawl.adapters.outbound.filesystem.atomic import _fsync_directory, _fsync_file
 
 
 def _sha256(path: Path) -> str:
@@ -28,7 +27,8 @@ def _inside(path: Path, parent: Path) -> bool:
 
 def _durable_copy(source: Path, target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source, target)
-    with target.open("rb") as handle:
-        os.fsync(handle.fileno())
+    shutil.copyfile(source, target)
+    _fsync_file(target)
+    # Preserve read-only source permissions only after flushing the writable copy.
+    shutil.copystat(source, target)
     _fsync_directory(target.parent)

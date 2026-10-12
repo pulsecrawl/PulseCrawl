@@ -2,6 +2,13 @@
 
 ## Publishing preparation
 
+- Serialize shared SQLite cursor reads as well as statement execution.
+- Flush completed output files with Windows-compatible writable descriptors,
+  retain directory write/rename exclusion during downloads, and install Windows
+  timezone data for scheduling. Profile metadata uses POSIX modes or inherited
+  Windows ACLs; credentials remain outside that file on every platform.
+- Generate the CI SBOM outside the checkout so the clean-source release gate
+  continues to reject genuine uncommitted source changes.
 - Pin container aiohttp consistently with the package security floor, and test
   container-lock compatibility to catch future dependency drift.
 - Publish downloaded artifacts without clobbering concurrent writers by default;

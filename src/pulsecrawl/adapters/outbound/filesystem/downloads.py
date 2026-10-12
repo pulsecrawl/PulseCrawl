@@ -50,10 +50,11 @@ def _windows_directory(path: Path):
     class Attributes(ctypes.Structure):
         _fields_ = [("attributes", wintypes.DWORD), ("tag", wintypes.DWORD)]
 
-    # FILE_READ_ATTRIBUTES, FILE_SHARE_READ, OPEN_EXISTING,
+    # GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING,
     # BACKUP_SEMANTICS | OPEN_REPARSE_POINT. Child creation does not require
     # opening the parent itself for write access.
-    handle = create(str(path), 0x80, 1, None, 3, 0x02200000, None)
+    # Attribute-only access does not participate in Windows sharing checks.
+    handle = create(str(path), 0x80000000, 1, None, 3, 0x02200000, None)
     if handle == ctypes.c_void_p(-1).value:
         raise ctypes.WinError(ctypes.get_last_error())
     try:

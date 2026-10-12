@@ -17,6 +17,51 @@ from typing import Iterator, Sequence
 SCHEMA_VERSION = 4
 
 
+class _SynchronizedCursor(sqlite3.Cursor):
+    """Serialize statement stepping as well as execution on a shared connection.
+
+    SQLite releases the GIL while fetching rows. Protecting only execute() lets
+    another worker use the same connection while a cursor is still stepping.
+    Keep reads lazy, but use the connection's lock for every cursor operation.
+    """
+
+    def __init__(self, connection, lock):
+        super().__init__(connection)
+        self._lock = lock
+
+    def execute(self, *args, **kwargs):
+        with self._lock:
+            return super().execute(*args, **kwargs)
+
+    def executemany(self, *args, **kwargs):
+        with self._lock:
+            return super().executemany(*args, **kwargs)
+
+    def executescript(self, *args, **kwargs):
+        with self._lock:
+            return super().executescript(*args, **kwargs)
+
+    def fetchone(self):
+        with self._lock:
+            return super().fetchone()
+
+    def fetchmany(self, *args, **kwargs):
+        with self._lock:
+            return super().fetchmany(*args, **kwargs)
+
+    def fetchall(self):
+        with self._lock:
+            return super().fetchall()
+
+    def __next__(self):
+        with self._lock:
+            return super().__next__()
+
+    def close(self):
+        with self._lock:
+            return super().close()
+
+
 class SQLiteState:
     """One WAL-mode database shared by local workers on the same machine."""
 
@@ -76,7 +121,10 @@ class SQLiteState:
 
     def execute(self, sql: str, values: Sequence[object] = ()) -> sqlite3.Cursor:
         with self._lock:
-            return self._db.execute(sql, values)
+            cursor = self._db.cursor(
+                factory=lambda connection: _SynchronizedCursor(connection, self._lock)
+            )
+            return cursor.execute(sql, values)
 
     def backup_to(self, destination: str | Path) -> Path:
         """Create a transactionally consistent SQLite backup."""

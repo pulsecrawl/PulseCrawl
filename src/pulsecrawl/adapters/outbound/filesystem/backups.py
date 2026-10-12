@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -13,6 +12,7 @@ from pulsecrawl.domain.errors import DatasetCorruptionError
 from pulsecrawl.adapters.outbound.filesystem.atomic import (
     _atomic_json,
     _fsync_directory,
+    _fsync_file,
 )
 from pulsecrawl.adapters.outbound.sqlite.clock import utc_now
 from pulsecrawl.adapters.outbound.filesystem.publication import publish_directory
@@ -80,8 +80,7 @@ class LocalBackupAdapter:
                 (temporary / "checksums.sha256").write_text(
                     "\n".join(checksums) + "\n", encoding="utf-8"
                 )
-                with (temporary / "checksums.sha256").open("rb") as handle:
-                    os.fsync(handle.fileno())
+                _fsync_file(temporary / "checksums.sha256")
                 _fsync_directory(temporary)
             publish_directory(temporary, destination)
             _fsync_directory(destination.parent)

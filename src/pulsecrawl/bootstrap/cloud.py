@@ -48,6 +48,11 @@ def _config_path() -> Path:
 
 
 def _atomic_private_json(path: Path, value: Mapping[str, Any]) -> None:
+    """Write credential-free metadata (POSIX 0600; inherited Windows ACLs).
+
+    chmod does not establish a Windows ACL. API keys are never written here;
+    the OS keyring or an ephemeral environment variable holds credentials.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:

@@ -81,6 +81,9 @@ must not include response bodies, authorization headers, API keys, cookies,
 signed URLs, or private records. Cloud profile JSON contains identifiers only;
 the optional hosted-client secret belongs in the operating-system credential
 store or an explicit CI environment variable.
+Profile metadata is written with mode `0600` on POSIX. On Windows it inherits
+the containing directory's ACL; `chmod` does not establish a private Windows
+ACL. Keep configuration in a user-controlled directory on either platform.
 
 ### Agent-assisted template authoring
 

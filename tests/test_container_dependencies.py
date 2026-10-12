@@ -22,6 +22,11 @@ def test_workspace_lock_satisfies_declared_runtime_dependencies():
         project["dependencies"] + project["optional-dependencies"]["workspace"]
     ):
         requirement = Requirement(declared)
+        # This lock targets the Linux container, not the test runner's OS.
+        if requirement.marker and not requirement.marker.evaluate(
+            {"sys_platform": "linux", "platform_system": "Linux", "os_name": "posix"}
+        ):
+            continue
         name = canonicalize_name(requirement.name)
         assert name in locked, f"Missing container pin: {name}"
         assert locked[name] in requirement.specifier, (

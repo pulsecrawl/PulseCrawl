@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -68,7 +69,8 @@ def test_cloud_profiles_keep_secrets_out_of_config(tmp_path, monkeypatch):
     assert store.get("production") == profile
     assert store.list() == [profile]
     assert "pk_live_secret" not in store.path.read_text()
-    assert store.path.stat().st_mode & 0o777 == 0o600
+    if os.name != "nt":
+        assert store.path.stat().st_mode & 0o777 == 0o600
 
     client = store.client("production")
     assert client.api_key == "pk_live_secret"
@@ -105,7 +107,8 @@ def test_profile_store_repairs_permissions_and_rolls_back_secret_on_write_failur
     path.write_text('{"version": 1, "profiles": {}}')
     path.chmod(0o644)
     store = CloudProfiles(path)
-    assert path.stat().st_mode & 0o777 == 0o600
+    if os.name != "nt":
+        assert path.stat().st_mode & 0o777 == 0o600
 
     keyring = FakeKeyring()
     monkeypatch.setattr(cloud_module, "_keyring", lambda: keyring)

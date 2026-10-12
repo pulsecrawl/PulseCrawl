@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 
-from pulsecrawl.adapters.outbound.filesystem.atomic import _fsync_directory
+from pulsecrawl.adapters.outbound.filesystem.atomic import _fsync_directory, _fsync_file
 
 
 class ParquetCompactor:
@@ -96,8 +96,7 @@ class ParquetCompactor:
                 raise
             else:
                 writer.close()
-            with temporary.open("rb") as handle:
-                os.fsync(handle.fileno())
+            _fsync_file(temporary)
             os.replace(temporary, target)
             _fsync_directory(target.parent)
             replacements[relative.as_posix()] = {

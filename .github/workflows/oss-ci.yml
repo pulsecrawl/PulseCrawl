@@ -175,7 +175,7 @@ jobs:
           smoke_site=$("${RUNNER_TEMP}/smoke/bin/python" -c 'import site; print(site.getsitepackages()[0])')
           python -m pip_audit --path "${smoke_site}" --progress-spinner off
           cyclonedx-py environment "${RUNNER_TEMP}/smoke/bin/python" \
-            --output-format JSON --output-file sbom.json
+            --output-format JSON --output-file "${RUNNER_TEMP}/sbom.json"
       - name: Check source boundary and tracked secrets
         run: |
           python scripts/check-secrets.py
@@ -185,7 +185,7 @@ jobs:
           name: oss-distributions-and-sbom
           path: |
             dist
-            sbom.json
+            ${{ runner.temp }}/sbom.json
           if-no-files-found: error
 
   public-boundary:

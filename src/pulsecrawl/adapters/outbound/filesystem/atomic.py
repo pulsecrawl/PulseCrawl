@@ -51,6 +51,16 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
         raise
 
 
+def _fsync_file(path: Path) -> None:
+    """Flush an owned output file without truncation, including on Windows.
+
+    Windows' CRT commit operation requires a writable descriptor; reopening a
+    completed Parquet or backup file read-only fails with EBADF there.
+    """
+    with path.open("r+b") as handle:
+        os.fsync(handle.fileno())
+
+
 def _fsync_directory(path: Path) -> None:
     """Persist a same-filesystem rename where directory fsync is supported."""
     try:

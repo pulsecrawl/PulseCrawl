@@ -9,7 +9,7 @@ from typing import Any
 
 from pulsecrawl.adapters.outbound.sqlite.clock import utc_now
 
-from pulsecrawl.adapters.outbound.filesystem.atomic import _fsync_directory
+from pulsecrawl.adapters.outbound.filesystem.atomic import _fsync_directory, _fsync_file
 
 
 class ParquetExecutionWriter:
@@ -134,8 +134,7 @@ class ParquetExecutionWriter:
         if row_count == 0:
             temporary.unlink(missing_ok=True)
             return None
-        with temporary.open("rb") as handle:
-            os.fsync(handle.fileno())
+        _fsync_file(temporary)
         os.replace(temporary, target)
         _fsync_directory(target.parent)
         item = {
