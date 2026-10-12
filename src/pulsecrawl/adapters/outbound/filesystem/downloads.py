@@ -11,6 +11,7 @@ import stat
 import uuid
 
 from .publication import publish_file
+from .windows_publication import publish_pinned_file
 
 
 _UNSAFE_PARENT = (
@@ -128,7 +129,10 @@ def stage_artifact(root: Path, parts: tuple[str, ...], *, overwrite: bool):
                 yield handle
                 handle.flush()
                 os.fsync(handle.fileno())
-            publish_file(temporary, target, overwrite=overwrite, directory_fd=parent_fd)
+            if os.name == "nt":
+                publish_pinned_file(temporary, name, overwrite=overwrite)
+            else:
+                publish_file(temporary, target, overwrite=overwrite, directory_fd=parent_fd)
         finally:
             try:
                 os.unlink(temporary, **options)

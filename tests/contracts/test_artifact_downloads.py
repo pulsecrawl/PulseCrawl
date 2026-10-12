@@ -67,6 +67,16 @@ def test_explicit_overwrite_replaces_regular_file(tmp_path):
     assert target.read_bytes() == b"new"
 
 
+def test_unicode_publication_stays_in_pinned_parent_not_current_directory(tmp_path, monkeypatch):
+    root, elsewhere = tmp_path / "root", tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+    name = "nested/記事-😀.parquet"
+    assert download([artifact(name)], root) == [root / name]
+    assert (root / name).read_bytes() == b"new"
+    assert list(elsewhere.iterdir()) == []
+
+
 @pytest.mark.parametrize("kind", ["directory", "symlink"])
 def test_overwrite_rejects_nonregular_existing_targets(tmp_path, kind):
     target = tmp_path / "part.parquet"

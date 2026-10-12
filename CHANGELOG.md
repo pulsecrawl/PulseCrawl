@@ -9,6 +9,8 @@
   Windows ACLs; credentials remain outside that file on every platform.
 - Generate the CI SBOM outside the checkout so the clean-source release gate
   continues to reject genuine uncommitted source changes.
+- Publish Windows downloads with a same-parent native rename so publication
+  does not reopen or unlock a parent protected against reparse mutation.
 - Pin container aiohttp consistently with the package security floor, and test
   container-lock compatibility to catch future dependency drift.
 - Publish downloaded artifacts without clobbering concurrent writers by default;
