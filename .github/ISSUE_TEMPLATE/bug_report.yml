@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a reproducible local-package defect. Use private reporting for security issues.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include secrets, private page bodies, personal data, or vulnerability details.
+  - type: input
+    id: version
+    attributes:
+      label: PulseCrawl version
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Python, operating system, and deployment mode
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, private content, signed URLs, and personal data.
+          required: true

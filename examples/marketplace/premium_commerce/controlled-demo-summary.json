@@ -1,0 +1,231 @@
+{
+  "kind": "controlled-local-demonstration-not-live-evidence",
+  "versionRowCounts": [
+    10,
+    20
+  ],
+  "fixtureFetchCalls": [
+    20,
+    10
+  ],
+  "checks": {
+    "tenScopes": true,
+    "twoCommittedVersions": true,
+    "twentyObservations": true,
+    "tenSyntheticPriceChanges": true
+  },
+  "observations": [
+    {
+      "source": "shop-01",
+      "prices": [
+        120.0,
+        99.0
+      ],
+      "currency": "USD",
+      "priceChange": -21.0
+    },
+    {
+      "source": "shop-02",
+      "prices": [
+        120.0,
+        99.0
+      ],
+      "currency": "USD",
+      "priceChange": -21.0
+    },
+    {
+      "source": "shop-03",
+      "prices": [
+        120.0,
+        99.0
+      ],
+      "currency": "USD",
+      "priceChange": -21.0
+    },
+    {
+      "source": "shop-04",
+      "prices": [
+        120.0,
+        99.0
+      ],
+      "currency": "USD",
+      "priceChange": -21.0
+    },
+    {
+      "source": "shop-05",
+      "prices": [
+        120.0,
+        99.0
+      ],
+      "currency": "USD",
+      "priceChange": -21.0
+    },
+    {
+      "source": "shop-06",
+      "prices": [
+        120.0,
+        99.0
+      ],
+      "currency": "USD",
+      "priceChange": -21.0
+    },
+    {
+      "source": "shop-07",
+      "prices": [
+        120.0,
+        99.0
+      ],
+      "currency": "USD",
+      "priceChange": -21.0
+    },
+    {
+      "source": "shop-08",
+      "prices": [
+        120.0,
+        99.0
+      ],
+      "currency": "USD",
+      "priceChange": -21.0
+    },
+    {
+      "source": "shop-09",
+      "prices": [
+        120.0,
+        99.0
+      ],
+      "currency": "USD",
+      "priceChange": -21.0
+    },
+    {
+      "source": "shop-10",
+      "prices": [
+        120.0,
+        99.0
+      ],
+      "currency": "USD",
+      "priceChange": -21.0
+    }
+  ],
+  "inputHashes": [
+    {
+      "source": "shop-01",
+      "observation": 1,
+      "observedAt": "2026-10-11T12:00:00+00:00",
+      "sha256": "26b2a367b041b58c9b23c41fe3d972f9024a7f734f43b690c2148b8a833993c7"
+    },
+    {
+      "source": "shop-02",
+      "observation": 1,
+      "observedAt": "2026-10-11T12:00:00+00:00",
+      "sha256": "c6f6ec06e7934b4017f6b9f30dc9342d6ee32f0f1f22d2194df183641ba92968"
+    },
+    {
+      "source": "shop-03",
+      "observation": 1,
+      "observedAt": "2026-10-11T12:00:00+00:00",
+      "sha256": "75d07ab0562faafa7a9192576ce3ca91c1d70dd2ddfea68e401a055a2a4924a9"
+    },
+    {
+      "source": "shop-04",
+      "observation": 1,
+      "observedAt": "2026-10-11T12:00:00+00:00",
+      "sha256": "4398740f9f5bb324b15b99b5f59aed8d6026887d16af875bc62d7ca28e2ca65d"
+    },
+    {
+      "source": "shop-05",
+      "observation": 1,
+      "observedAt": "2026-10-11T12:00:00+00:00",
+      "sha256": "1fb99978a3f9c6469d3a7bacd4d477a207d56afdb4ee27f28db4ffb92777550c"
+    },
+    {
+      "source": "shop-06",
+      "observation": 1,
+      "observedAt": "2026-10-11T12:00:00+00:00",
+      "sha256": "08410e768cd0ac7c2546aebd4020a0720af5997775cfbe755a916bde2aba52ac"
+    },
+    {
+      "source": "shop-07",
+      "observation": 1,
+      "observedAt": "2026-10-11T12:00:00+00:00",
+      "sha256": "9781e33a572b59c2da489e2a06ea6afe197390c8c0b825ef34b4571ba830018b"
+    },
+    {
+      "source": "shop-08",
+      "observation": 1,
+      "observedAt": "2026-10-11T12:00:00+00:00",
+      "sha256": "a364b353f3d1a7bb8efb7c072d2a706369734dc499714b6df5e47d72f563c099"
+    },
+    {
+      "source": "shop-09",
+      "observation": 1,
+      "observedAt": "2026-10-11T12:00:00+00:00",
+      "sha256": "c36761804bf2f5e48a98b8302ffe821ad01987a269e0e9a3ea61a03db31a5aa4"
+    },
+    {
+      "source": "shop-10",
+      "observation": 1,
+      "observedAt": "2026-10-11T12:00:00+00:00",
+      "sha256": "1412de940df131318cbc20753a6e2fdf00af3ad35cf76319c0d1b767b1775004"
+    },
+    {
+      "source": "shop-01",
+      "observation": 2,
+      "observedAt": "2026-10-11T13:00:00+00:00",
+      "sha256": "e9115bdbed44ff295c21d2363bcf3b75a477aa8a4bc231fe7014ca0e4f98755a"
+    },
+    {
+      "source": "shop-02",
+      "observation": 2,
+      "observedAt": "2026-10-11T13:00:00+00:00",
+      "sha256": "04ffff260c0e849ca216f012c977cdf8853440076c7a67c328c42a1db484bf48"
+    },
+    {
+      "source": "shop-03",
+      "observation": 2,
+      "observedAt": "2026-10-11T13:00:00+00:00",
+      "sha256": "32b1d68bd1e9c3da2985f30f9623f7f08e9e0476a701888a55aa072b568c2052"
+    },
+    {
+      "source": "shop-04",
+      "observation": 2,
+      "observedAt": "2026-10-11T13:00:00+00:00",
+      "sha256": "c52caa504f1b59a4044e21f28b76d5af77c2e2d749ccd0bba6d1cfa35b256cc4"
+    },
+    {
+      "source": "shop-05",
+      "observation": 2,
+      "observedAt": "2026-10-11T13:00:00+00:00",
+      "sha256": "dd44e329720f61a9ed4c2a7038483fcb22f50b87d00ee6045e0a30ea6df7bb68"
+    },
+    {
+      "source": "shop-06",
+      "observation": 2,
+      "observedAt": "2026-10-11T13:00:00+00:00",
+      "sha256": "2450162e37b5ca2d9477402927669275c0e152a84baf7692be98ea795a14d9b4"
+    },
+    {
+      "source": "shop-07",
+      "observation": 2,
+      "observedAt": "2026-10-11T13:00:00+00:00",
+      "sha256": "6f70467c371cfb2f8355d3395312a57ccaa6cb695be21495ee16b8dfa4f8aa25"
+    },
+    {
+      "source": "shop-08",
+      "observation": 2,
+      "observedAt": "2026-10-11T13:00:00+00:00",
+      "sha256": "e8aa6c2b03564dde2f4849d13ef43feca852ad6878b88fd3af927f1e0eeab782"
+    },
+    {
+      "source": "shop-09",
+      "observation": 2,
+      "observedAt": "2026-10-11T13:00:00+00:00",
+      "sha256": "b0196f3df21d5bf0a9189b623aea7f11d2e2613750b1f707417c867c63f75b8a"
+    },
+    {
+      "source": "shop-10",
+      "observation": 2,
+      "observedAt": "2026-10-11T13:00:00+00:00",
+      "sha256": "94726dfec7a4d560fb5539dba20b61440e25c262656d3ae6cd9092ef8d2a9831"
+    }
+  ]
+}

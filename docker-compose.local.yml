@@ -1,0 +1,26 @@
+services:
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pulsecrawl-local:dev
+    restart: unless-stopped
+    command: ["--workspace", "/workspace", "schedule", "start"]
+    volumes:
+      - ${PULSECRAWL_WORKSPACE:-./.pulsecrawl-workspace}:/workspace
+    healthcheck:
+      test: ["CMD-SHELL", "pulsecrawl --workspace /workspace validate >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: none
+
+  cli:
+    image: pulsecrawl-local:dev
+    profiles: ["tools"]
+    volumes:
+      - ${PULSECRAWL_WORKSPACE:-./.pulsecrawl-workspace}:/workspace
+    logging:
+      driver: none

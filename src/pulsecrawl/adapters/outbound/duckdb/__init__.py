@@ -1,0 +1,1 @@
+"""PulseCrawl adapters outbound duckdb."""

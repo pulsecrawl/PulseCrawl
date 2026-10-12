@@ -1,0 +1,1559 @@
+{
+  "schemaVersion": 1,
+  "kind": "live-end-to-end-case-study-plan",
+  "status": "not-run",
+  "recordHtml": false,
+  "userAgent": "PulseCrawlLiveStudy/0.1 (+https://github.com/pulsecrawl/research-datasets)",
+  "limits": {
+    "maxExecutions": 2,
+    "minIntervalHours": 24,
+    "requestsPerSecond": 0.25,
+    "maxPagesPerExecution": 10
+  },
+  "sources": [
+    {
+      "id": "lululemon",
+      "name": "lululemon",
+      "url": "https://shop.lululemon.com/p/align-pant-2/i4goprzy85?color=77648&locale=en_US",
+      "termsUrl": "https://shop.lululemon.com/help/legal/terms-of-use/",
+      "enabled": false,
+      "accessReview": {
+        "status": "pending-review",
+        "basis": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "id": "alo",
+      "name": "Alo Yoga",
+      "url": "https://www.aloyoga.com/products/w5561r-high-waist-airlift-legging-black?variant=22032629170294",
+      "termsUrl": "https://www.aloyoga.com/pages/terms-of-use",
+      "enabled": false,
+      "accessReview": {
+        "status": "pending-review",
+        "basis": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "id": "nordstrom",
+      "name": "Nordstrom",
+      "url": "https://www.nordstrom.com/s/alo-airbrush-high-waist-leggings/5538850",
+      "termsUrl": "https://www.nordstrom.com/browse/customer-service/policy/terms-conditions",
+      "enabled": false,
+      "accessReview": {
+        "status": "pending-review",
+        "basis": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "id": "revolve",
+      "name": "REVOLVE",
+      "url": "https://www.revolve.com/nike-air-footscape-woven-og-sneakers-in-black-white/dp/NIKR-MZ933/",
+      "termsUrl": "https://www.revolve.com/r/infoTerms.jsp",
+      "enabled": false,
+      "accessReview": {
+        "status": "pending-review",
+        "basis": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "id": "nike",
+      "name": "Nike",
+      "url": "https://www.nike.com/t/air-force-1-07-ayakkab%C4%B1s%C4%B1-rWtqPn/CW2288-001",
+      "termsUrl": "https://agreementservice.svs.nike.com/gb/en_gb/rest/agreement?agreementType=termsOfUse&uxId=com.nike&country=US&language=en&requestType=redirect",
+      "enabled": false,
+      "accessReview": {
+        "status": "pending-review",
+        "basis": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "id": "adidas",
+      "name": "Adidas",
+      "url": "https://www.adidas.com/us/samba-og-shoes/B75806.html",
+      "termsUrl": "https://www.adidas.com/us/help/us-company-information/what-are-the-terms-and-conditions",
+      "enabled": false,
+      "accessReview": {
+        "status": "pending-review",
+        "basis": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "id": "new-balance",
+      "name": "New Balance",
+      "url": "https://www.newbalance.com/pd/made-in-usa-990v6/M990NV6-D-11.html",
+      "termsUrl": "https://www.newbalance.com/terms.html",
+      "enabled": false,
+      "accessReview": {
+        "status": "pending-review",
+        "basis": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "id": "on",
+      "name": "On",
+      "url": "https://www.on.com/en-us/products/cloudmonster-2-m-3mf3115/mens/ivory-steel-shoes-3MF31154571",
+      "termsUrl": "https://www.on.com/en-us/terms-and-conditions",
+      "enabled": false,
+      "accessReview": {
+        "status": "pending-review",
+        "basis": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "id": "hoka",
+      "name": "HOKA",
+      "url": "https://www.hoka.com/en/us/mens-everyday-running-gear/clifton-11/1176572.html?dwvar_1176572_color=BKCS",
+      "termsUrl": "https://www.hoka.com/en/us/terms-and-conditions.html",
+      "enabled": false,
+      "accessReview": {
+        "status": "pending-review",
+        "basis": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "id": "ugg",
+      "name": "UGG",
+      "url": "https://www.ugg.com/women-boots/classic-ultra-mini/1116109.html?dwvar_1116109_color=CRBO&dwvar_1116109_size=11",
+      "termsUrl": "https://www.ugg.com/terms-and-conditions.html",
+      "enabled": false,
+      "accessReview": {
+        "status": "pending-review",
+        "basis": null,
+        "reviewedAt": null
+      }
+    }
+  ],
+  "fields": [
+    {
+      "name": "name",
+      "type": "string",
+      "description": "Advertised product name"
+    },
+    {
+      "name": "store",
+      "type": "string",
+      "description": "Storefront; not necessarily the product brand"
+    },
+    {
+      "name": "brand",
+      "type": "string",
+      "description": "Brand stated by the page"
+    },
+    {
+      "name": "product_id",
+      "type": "string",
+      "description": "Page product identifier, if supplied"
+    },
+    {
+      "name": "sku",
+      "type": "string",
+      "description": "Product-level SKU, if supplied"
+    },
+    {
+      "name": "gtin",
+      "type": "string",
+      "description": "Advertised GTIN; no cross-store matching inferred"
+    },
+    {
+      "name": "product_url",
+      "type": "url",
+      "description": "Page-declared product URL; may omit variant context"
+    },
+    {
+      "name": "offer_url",
+      "type": "url",
+      "description": "First structured offer URL, if supplied"
+    },
+    {
+      "name": "offer_sku",
+      "type": "string",
+      "description": "First structured offer SKU, if supplied"
+    },
+    {
+      "name": "current_price",
+      "type": "number",
+      "description": "First structured offer or semantic page price"
+    },
+    {
+      "name": "regular_price",
+      "type": "number",
+      "description": "Reserved: no validated compare-at mapping yet"
+    },
+    {
+      "name": "low_price",
+      "type": "number",
+      "description": "Aggregate offer minimum; not the selected price"
+    },
+    {
+      "name": "high_price",
+      "type": "number",
+      "description": "Aggregate offer maximum; not the selected price"
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "description": "Explicit currency; never inferred from a symbol"
+    },
+    {
+      "name": "availability",
+      "type": "string",
+      "description": "Page-level or first-offer availability only"
+    },
+    {
+      "name": "color",
+      "type": "string",
+      "description": "Product color stated by markup, if supplied"
+    },
+    {
+      "name": "size",
+      "type": "string",
+      "description": "Product size stated by markup, if supplied"
+    },
+    {
+      "name": "group_id",
+      "type": "string",
+      "description": "Product group identifier; not a unique variant identifier"
+    }
+  ],
+  "recipes": [
+    {
+      "slug": "lululemon",
+      "store": "lululemon",
+      "sampleUrl": "https://shop.lululemon.com/p/align-pant-2/i4goprzy85?color=77648&locale=en_US",
+      "liveStatus": "disabled-provisional",
+      "templateStack": [
+        {
+          "template_id": "premium_lululemon_jsonld",
+          "engine": "jsonld",
+          "mappings": {
+            "fld_premium_name": [
+              "Product.name"
+            ],
+            "fld_premium_brand": [
+              "Product.brand.name",
+              "Product.brand"
+            ],
+            "fld_premium_product_id": [
+              "Product.productID",
+              "Product.mpn"
+            ],
+            "fld_premium_sku": [
+              "Product.sku"
+            ],
+            "fld_premium_gtin": [
+              "Product.gtin13",
+              "Product.gtin12",
+              "Product.gtin"
+            ],
+            "fld_premium_product_url": [
+              "Product.url"
+            ],
+            "fld_premium_offer_url": [
+              "Product.offers.url"
+            ],
+            "fld_premium_offer_sku": [
+              "Product.offers.sku"
+            ],
+            "fld_premium_current_price": [
+              "Product.offers.price"
+            ],
+            "fld_premium_low_price": [
+              "Product.offers.lowPrice"
+            ],
+            "fld_premium_high_price": [
+              "Product.offers.highPrice"
+            ],
+            "fld_premium_currency": [
+              "Product.offers.priceCurrency"
+            ],
+            "fld_premium_availability": [
+              "Product.offers.availability"
+            ],
+            "fld_premium_color": [
+              "Product.color"
+            ],
+            "fld_premium_size": [
+              "Product.size",
+              "Product.size.name"
+            ],
+            "fld_premium_group_id": [
+              "Product.productGroupID"
+            ]
+          },
+          "hosts": [
+            "shop.lululemon.com"
+          ],
+          "url_patterns": [
+            "/p/*/*"
+          ]
+        },
+        {
+          "template_id": "premium_lululemon_css",
+          "engine": "css",
+          "mappings": {
+            "fld_premium_name": [
+              "[itemtype$='/Product'] [itemprop='name']"
+            ],
+            "fld_premium_current_price": [
+              "[itemtype$='/Product'] [itemprop='price']@content"
+            ],
+            "fld_premium_currency": [
+              "[itemtype$='/Product'] [itemprop='priceCurrency']@content"
+            ],
+            "fld_premium_sku": [
+              "[itemtype$='/Product'] [itemprop='sku']@content"
+            ]
+          },
+          "hosts": [
+            "shop.lululemon.com"
+          ],
+          "url_patterns": [
+            "/p/*/*"
+          ]
+        },
+        {
+          "template_id": "premium_lululemon_meta",
+          "engine": "meta",
+          "mappings": {
+            "fld_premium_name": [
+              "og:title"
+            ],
+            "fld_premium_product_url": [
+              "og:url"
+            ],
+            "fld_premium_current_price": [
+              "product:price:amount",
+              "og:price:amount"
+            ],
+            "fld_premium_currency": [
+              "product:price:currency",
+              "og:price:currency"
+            ],
+            "fld_premium_availability": [
+              "product:availability"
+            ],
+            "fld_premium_brand": [
+              "product:brand"
+            ],
+            "fld_premium_store": [
+              "literal:lululemon"
+            ]
+          },
+          "hosts": [
+            "shop.lululemon.com"
+          ],
+          "url_patterns": [
+            "/p/*/*"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "alo",
+      "store": "Alo Yoga",
+      "sampleUrl": "https://www.aloyoga.com/products/w5561r-high-waist-airlift-legging-black?variant=22032629170294",
+      "liveStatus": "disabled-provisional",
+      "templateStack": [
+        {
+          "template_id": "premium_alo_jsonld",
+          "engine": "jsonld",
+          "mappings": {
+            "fld_premium_name": [
+              "Product.name"
+            ],
+            "fld_premium_brand": [
+              "Product.brand.name",
+              "Product.brand"
+            ],
+            "fld_premium_product_id": [
+              "Product.productID",
+              "Product.mpn"
+            ],
+            "fld_premium_sku": [
+              "Product.sku"
+            ],
+            "fld_premium_gtin": [
+              "Product.gtin13",
+              "Product.gtin12",
+              "Product.gtin"
+            ],
+            "fld_premium_product_url": [
+              "Product.url"
+            ],
+            "fld_premium_offer_url": [
+              "Product.offers.url"
+            ],
+            "fld_premium_offer_sku": [
+              "Product.offers.sku"
+            ],
+            "fld_premium_current_price": [
+              "Product.offers.price"
+            ],
+            "fld_premium_low_price": [
+              "Product.offers.lowPrice"
+            ],
+            "fld_premium_high_price": [
+              "Product.offers.highPrice"
+            ],
+            "fld_premium_currency": [
+              "Product.offers.priceCurrency"
+            ],
+            "fld_premium_availability": [
+              "Product.offers.availability"
+            ],
+            "fld_premium_color": [
+              "Product.color"
+            ],
+            "fld_premium_size": [
+              "Product.size",
+              "Product.size.name"
+            ],
+            "fld_premium_group_id": [
+              "Product.productGroupID"
+            ]
+          },
+          "hosts": [
+            "www.aloyoga.com"
+          ],
+          "url_patterns": [
+            "/products/*"
+          ]
+        },
+        {
+          "template_id": "premium_alo_css",
+          "engine": "css",
+          "mappings": {
+            "fld_premium_name": [
+              "[itemtype$='/Product'] [itemprop='name']"
+            ],
+            "fld_premium_current_price": [
+              "[itemtype$='/Product'] [itemprop='price']@content"
+            ],
+            "fld_premium_currency": [
+              "[itemtype$='/Product'] [itemprop='priceCurrency']@content"
+            ],
+            "fld_premium_sku": [
+              "[itemtype$='/Product'] [itemprop='sku']@content"
+            ]
+          },
+          "hosts": [
+            "www.aloyoga.com"
+          ],
+          "url_patterns": [
+            "/products/*"
+          ]
+        },
+        {
+          "template_id": "premium_alo_meta",
+          "engine": "meta",
+          "mappings": {
+            "fld_premium_name": [
+              "og:title"
+            ],
+            "fld_premium_product_url": [
+              "og:url"
+            ],
+            "fld_premium_current_price": [
+              "product:price:amount",
+              "og:price:amount"
+            ],
+            "fld_premium_currency": [
+              "product:price:currency",
+              "og:price:currency"
+            ],
+            "fld_premium_availability": [
+              "product:availability"
+            ],
+            "fld_premium_brand": [
+              "product:brand"
+            ],
+            "fld_premium_store": [
+              "literal:Alo Yoga"
+            ]
+          },
+          "hosts": [
+            "www.aloyoga.com"
+          ],
+          "url_patterns": [
+            "/products/*"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "nordstrom",
+      "store": "Nordstrom",
+      "sampleUrl": "https://www.nordstrom.com/s/alo-airbrush-high-waist-leggings/5538850",
+      "liveStatus": "disabled-provisional",
+      "templateStack": [
+        {
+          "template_id": "premium_nordstrom_jsonld",
+          "engine": "jsonld",
+          "mappings": {
+            "fld_premium_name": [
+              "Product.name"
+            ],
+            "fld_premium_brand": [
+              "Product.brand.name",
+              "Product.brand"
+            ],
+            "fld_premium_product_id": [
+              "Product.productID",
+              "Product.mpn"
+            ],
+            "fld_premium_sku": [
+              "Product.sku"
+            ],
+            "fld_premium_gtin": [
+              "Product.gtin13",
+              "Product.gtin12",
+              "Product.gtin"
+            ],
+            "fld_premium_product_url": [
+              "Product.url"
+            ],
+            "fld_premium_offer_url": [
+              "Product.offers.url"
+            ],
+            "fld_premium_offer_sku": [
+              "Product.offers.sku"
+            ],
+            "fld_premium_current_price": [
+              "Product.offers.price"
+            ],
+            "fld_premium_low_price": [
+              "Product.offers.lowPrice"
+            ],
+            "fld_premium_high_price": [
+              "Product.offers.highPrice"
+            ],
+            "fld_premium_currency": [
+              "Product.offers.priceCurrency"
+            ],
+            "fld_premium_availability": [
+              "Product.offers.availability"
+            ],
+            "fld_premium_color": [
+              "Product.color"
+            ],
+            "fld_premium_size": [
+              "Product.size",
+              "Product.size.name"
+            ],
+            "fld_premium_group_id": [
+              "Product.productGroupID"
+            ]
+          },
+          "hosts": [
+            "www.nordstrom.com"
+          ],
+          "url_patterns": [
+            "/s/*/[0-9]*"
+          ]
+        },
+        {
+          "template_id": "premium_nordstrom_css",
+          "engine": "css",
+          "mappings": {
+            "fld_premium_name": [
+              "[itemtype$='/Product'] [itemprop='name']"
+            ],
+            "fld_premium_current_price": [
+              "[itemtype$='/Product'] [itemprop='price']@content"
+            ],
+            "fld_premium_currency": [
+              "[itemtype$='/Product'] [itemprop='priceCurrency']@content"
+            ],
+            "fld_premium_sku": [
+              "[itemtype$='/Product'] [itemprop='sku']@content"
+            ]
+          },
+          "hosts": [
+            "www.nordstrom.com"
+          ],
+          "url_patterns": [
+            "/s/*/[0-9]*"
+          ]
+        },
+        {
+          "template_id": "premium_nordstrom_meta",
+          "engine": "meta",
+          "mappings": {
+            "fld_premium_name": [
+              "og:title"
+            ],
+            "fld_premium_product_url": [
+              "og:url"
+            ],
+            "fld_premium_current_price": [
+              "product:price:amount",
+              "og:price:amount"
+            ],
+            "fld_premium_currency": [
+              "product:price:currency",
+              "og:price:currency"
+            ],
+            "fld_premium_availability": [
+              "product:availability"
+            ],
+            "fld_premium_brand": [
+              "product:brand"
+            ],
+            "fld_premium_store": [
+              "literal:Nordstrom"
+            ]
+          },
+          "hosts": [
+            "www.nordstrom.com"
+          ],
+          "url_patterns": [
+            "/s/*/[0-9]*"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "revolve",
+      "store": "REVOLVE",
+      "sampleUrl": "https://www.revolve.com/nike-air-footscape-woven-og-sneakers-in-black-white/dp/NIKR-MZ933/",
+      "liveStatus": "disabled-provisional",
+      "templateStack": [
+        {
+          "template_id": "premium_revolve_jsonld",
+          "engine": "jsonld",
+          "mappings": {
+            "fld_premium_name": [
+              "Product.name"
+            ],
+            "fld_premium_brand": [
+              "Product.brand.name",
+              "Product.brand"
+            ],
+            "fld_premium_product_id": [
+              "Product.productID",
+              "Product.mpn"
+            ],
+            "fld_premium_sku": [
+              "Product.sku"
+            ],
+            "fld_premium_gtin": [
+              "Product.gtin13",
+              "Product.gtin12",
+              "Product.gtin"
+            ],
+            "fld_premium_product_url": [
+              "Product.url"
+            ],
+            "fld_premium_offer_url": [
+              "Product.offers.url"
+            ],
+            "fld_premium_offer_sku": [
+              "Product.offers.sku"
+            ],
+            "fld_premium_current_price": [
+              "Product.offers.price"
+            ],
+            "fld_premium_low_price": [
+              "Product.offers.lowPrice"
+            ],
+            "fld_premium_high_price": [
+              "Product.offers.highPrice"
+            ],
+            "fld_premium_currency": [
+              "Product.offers.priceCurrency"
+            ],
+            "fld_premium_availability": [
+              "Product.offers.availability"
+            ],
+            "fld_premium_color": [
+              "Product.color"
+            ],
+            "fld_premium_size": [
+              "Product.size",
+              "Product.size.name"
+            ],
+            "fld_premium_group_id": [
+              "Product.productGroupID"
+            ]
+          },
+          "hosts": [
+            "www.revolve.com"
+          ],
+          "url_patterns": [
+            "/*/dp/*/"
+          ]
+        },
+        {
+          "template_id": "premium_revolve_css",
+          "engine": "css",
+          "mappings": {
+            "fld_premium_name": [
+              "[itemtype$='/Product'] [itemprop='name']"
+            ],
+            "fld_premium_current_price": [
+              "[itemtype$='/Product'] [itemprop='price']@content"
+            ],
+            "fld_premium_currency": [
+              "[itemtype$='/Product'] [itemprop='priceCurrency']@content"
+            ],
+            "fld_premium_sku": [
+              "[itemtype$='/Product'] [itemprop='sku']@content"
+            ]
+          },
+          "hosts": [
+            "www.revolve.com"
+          ],
+          "url_patterns": [
+            "/*/dp/*/"
+          ]
+        },
+        {
+          "template_id": "premium_revolve_meta",
+          "engine": "meta",
+          "mappings": {
+            "fld_premium_name": [
+              "og:title"
+            ],
+            "fld_premium_product_url": [
+              "og:url"
+            ],
+            "fld_premium_current_price": [
+              "product:price:amount",
+              "og:price:amount"
+            ],
+            "fld_premium_currency": [
+              "product:price:currency",
+              "og:price:currency"
+            ],
+            "fld_premium_availability": [
+              "product:availability"
+            ],
+            "fld_premium_brand": [
+              "product:brand"
+            ],
+            "fld_premium_store": [
+              "literal:REVOLVE"
+            ]
+          },
+          "hosts": [
+            "www.revolve.com"
+          ],
+          "url_patterns": [
+            "/*/dp/*/"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "nike",
+      "store": "Nike",
+      "sampleUrl": "https://www.nike.com/t/air-force-1-07-ayakkab%C4%B1s%C4%B1-rWtqPn/CW2288-001",
+      "liveStatus": "disabled-provisional",
+      "templateStack": [
+        {
+          "template_id": "premium_nike_jsonld",
+          "engine": "jsonld",
+          "mappings": {
+            "fld_premium_name": [
+              "Product.name"
+            ],
+            "fld_premium_brand": [
+              "Product.brand.name",
+              "Product.brand"
+            ],
+            "fld_premium_product_id": [
+              "Product.productID",
+              "Product.mpn"
+            ],
+            "fld_premium_sku": [
+              "Product.sku"
+            ],
+            "fld_premium_gtin": [
+              "Product.gtin13",
+              "Product.gtin12",
+              "Product.gtin"
+            ],
+            "fld_premium_product_url": [
+              "Product.url"
+            ],
+            "fld_premium_offer_url": [
+              "Product.offers.url"
+            ],
+            "fld_premium_offer_sku": [
+              "Product.offers.sku"
+            ],
+            "fld_premium_current_price": [
+              "Product.offers.price"
+            ],
+            "fld_premium_low_price": [
+              "Product.offers.lowPrice"
+            ],
+            "fld_premium_high_price": [
+              "Product.offers.highPrice"
+            ],
+            "fld_premium_currency": [
+              "Product.offers.priceCurrency"
+            ],
+            "fld_premium_availability": [
+              "Product.offers.availability"
+            ],
+            "fld_premium_color": [
+              "Product.color"
+            ],
+            "fld_premium_size": [
+              "Product.size",
+              "Product.size.name"
+            ],
+            "fld_premium_group_id": [
+              "Product.productGroupID"
+            ]
+          },
+          "hosts": [
+            "www.nike.com"
+          ],
+          "url_patterns": [
+            "/t/*/*"
+          ]
+        },
+        {
+          "template_id": "premium_nike_css",
+          "engine": "css",
+          "mappings": {
+            "fld_premium_name": [
+              "[itemtype$='/Product'] [itemprop='name']"
+            ],
+            "fld_premium_current_price": [
+              "[itemtype$='/Product'] [itemprop='price']@content"
+            ],
+            "fld_premium_currency": [
+              "[itemtype$='/Product'] [itemprop='priceCurrency']@content"
+            ],
+            "fld_premium_sku": [
+              "[itemtype$='/Product'] [itemprop='sku']@content"
+            ]
+          },
+          "hosts": [
+            "www.nike.com"
+          ],
+          "url_patterns": [
+            "/t/*/*"
+          ]
+        },
+        {
+          "template_id": "premium_nike_meta",
+          "engine": "meta",
+          "mappings": {
+            "fld_premium_name": [
+              "og:title"
+            ],
+            "fld_premium_product_url": [
+              "og:url"
+            ],
+            "fld_premium_current_price": [
+              "product:price:amount",
+              "og:price:amount"
+            ],
+            "fld_premium_currency": [
+              "product:price:currency",
+              "og:price:currency"
+            ],
+            "fld_premium_availability": [
+              "product:availability"
+            ],
+            "fld_premium_brand": [
+              "product:brand"
+            ],
+            "fld_premium_store": [
+              "literal:Nike"
+            ]
+          },
+          "hosts": [
+            "www.nike.com"
+          ],
+          "url_patterns": [
+            "/t/*/*"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "adidas",
+      "store": "Adidas",
+      "sampleUrl": "https://www.adidas.com/us/samba-og-shoes/B75806.html",
+      "liveStatus": "disabled-provisional",
+      "templateStack": [
+        {
+          "template_id": "premium_adidas_jsonld",
+          "engine": "jsonld",
+          "mappings": {
+            "fld_premium_name": [
+              "Product.name"
+            ],
+            "fld_premium_brand": [
+              "Product.brand.name",
+              "Product.brand"
+            ],
+            "fld_premium_product_id": [
+              "Product.productID",
+              "Product.mpn"
+            ],
+            "fld_premium_sku": [
+              "Product.sku"
+            ],
+            "fld_premium_gtin": [
+              "Product.gtin13",
+              "Product.gtin12",
+              "Product.gtin"
+            ],
+            "fld_premium_product_url": [
+              "Product.url"
+            ],
+            "fld_premium_offer_url": [
+              "Product.offers.url"
+            ],
+            "fld_premium_offer_sku": [
+              "Product.offers.sku"
+            ],
+            "fld_premium_current_price": [
+              "Product.offers.price"
+            ],
+            "fld_premium_low_price": [
+              "Product.offers.lowPrice"
+            ],
+            "fld_premium_high_price": [
+              "Product.offers.highPrice"
+            ],
+            "fld_premium_currency": [
+              "Product.offers.priceCurrency"
+            ],
+            "fld_premium_availability": [
+              "Product.offers.availability"
+            ],
+            "fld_premium_color": [
+              "Product.color"
+            ],
+            "fld_premium_size": [
+              "Product.size",
+              "Product.size.name"
+            ],
+            "fld_premium_group_id": [
+              "Product.productGroupID"
+            ]
+          },
+          "hosts": [
+            "www.adidas.com"
+          ],
+          "url_patterns": [
+            "/us/*/*.html"
+          ]
+        },
+        {
+          "template_id": "premium_adidas_css",
+          "engine": "css",
+          "mappings": {
+            "fld_premium_name": [
+              "[itemtype$='/Product'] [itemprop='name']"
+            ],
+            "fld_premium_current_price": [
+              "[itemtype$='/Product'] [itemprop='price']@content"
+            ],
+            "fld_premium_currency": [
+              "[itemtype$='/Product'] [itemprop='priceCurrency']@content"
+            ],
+            "fld_premium_sku": [
+              "[itemtype$='/Product'] [itemprop='sku']@content"
+            ]
+          },
+          "hosts": [
+            "www.adidas.com"
+          ],
+          "url_patterns": [
+            "/us/*/*.html"
+          ]
+        },
+        {
+          "template_id": "premium_adidas_meta",
+          "engine": "meta",
+          "mappings": {
+            "fld_premium_name": [
+              "og:title"
+            ],
+            "fld_premium_product_url": [
+              "og:url"
+            ],
+            "fld_premium_current_price": [
+              "product:price:amount",
+              "og:price:amount"
+            ],
+            "fld_premium_currency": [
+              "product:price:currency",
+              "og:price:currency"
+            ],
+            "fld_premium_availability": [
+              "product:availability"
+            ],
+            "fld_premium_brand": [
+              "product:brand"
+            ],
+            "fld_premium_store": [
+              "literal:Adidas"
+            ]
+          },
+          "hosts": [
+            "www.adidas.com"
+          ],
+          "url_patterns": [
+            "/us/*/*.html"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "new-balance",
+      "store": "New Balance",
+      "sampleUrl": "https://www.newbalance.com/pd/made-in-usa-990v6/M990NV6-D-11.html",
+      "liveStatus": "disabled-provisional",
+      "templateStack": [
+        {
+          "template_id": "premium_new-balance_jsonld",
+          "engine": "jsonld",
+          "mappings": {
+            "fld_premium_name": [
+              "Product.name"
+            ],
+            "fld_premium_brand": [
+              "Product.brand.name",
+              "Product.brand"
+            ],
+            "fld_premium_product_id": [
+              "Product.productID",
+              "Product.mpn"
+            ],
+            "fld_premium_sku": [
+              "Product.sku"
+            ],
+            "fld_premium_gtin": [
+              "Product.gtin13",
+              "Product.gtin12",
+              "Product.gtin"
+            ],
+            "fld_premium_product_url": [
+              "Product.url"
+            ],
+            "fld_premium_offer_url": [
+              "Product.offers.url"
+            ],
+            "fld_premium_offer_sku": [
+              "Product.offers.sku"
+            ],
+            "fld_premium_current_price": [
+              "Product.offers.price"
+            ],
+            "fld_premium_low_price": [
+              "Product.offers.lowPrice"
+            ],
+            "fld_premium_high_price": [
+              "Product.offers.highPrice"
+            ],
+            "fld_premium_currency": [
+              "Product.offers.priceCurrency"
+            ],
+            "fld_premium_availability": [
+              "Product.offers.availability"
+            ],
+            "fld_premium_color": [
+              "Product.color"
+            ],
+            "fld_premium_size": [
+              "Product.size",
+              "Product.size.name"
+            ],
+            "fld_premium_group_id": [
+              "Product.productGroupID"
+            ]
+          },
+          "hosts": [
+            "www.newbalance.com"
+          ],
+          "url_patterns": [
+            "/pd/*/*.html"
+          ]
+        },
+        {
+          "template_id": "premium_new-balance_css",
+          "engine": "css",
+          "mappings": {
+            "fld_premium_name": [
+              "[itemtype$='/Product'] [itemprop='name']"
+            ],
+            "fld_premium_current_price": [
+              "[itemtype$='/Product'] [itemprop='price']@content"
+            ],
+            "fld_premium_currency": [
+              "[itemtype$='/Product'] [itemprop='priceCurrency']@content"
+            ],
+            "fld_premium_sku": [
+              "[itemtype$='/Product'] [itemprop='sku']@content"
+            ]
+          },
+          "hosts": [
+            "www.newbalance.com"
+          ],
+          "url_patterns": [
+            "/pd/*/*.html"
+          ]
+        },
+        {
+          "template_id": "premium_new-balance_meta",
+          "engine": "meta",
+          "mappings": {
+            "fld_premium_name": [
+              "og:title"
+            ],
+            "fld_premium_product_url": [
+              "og:url"
+            ],
+            "fld_premium_current_price": [
+              "product:price:amount",
+              "og:price:amount"
+            ],
+            "fld_premium_currency": [
+              "product:price:currency",
+              "og:price:currency"
+            ],
+            "fld_premium_availability": [
+              "product:availability"
+            ],
+            "fld_premium_brand": [
+              "product:brand"
+            ],
+            "fld_premium_store": [
+              "literal:New Balance"
+            ]
+          },
+          "hosts": [
+            "www.newbalance.com"
+          ],
+          "url_patterns": [
+            "/pd/*/*.html"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "on",
+      "store": "On",
+      "sampleUrl": "https://www.on.com/en-us/products/cloudmonster-2-m-3mf3115/mens/ivory-steel-shoes-3MF31154571",
+      "liveStatus": "disabled-provisional",
+      "templateStack": [
+        {
+          "template_id": "premium_on_jsonld",
+          "engine": "jsonld",
+          "mappings": {
+            "fld_premium_name": [
+              "Product.name"
+            ],
+            "fld_premium_brand": [
+              "Product.brand.name",
+              "Product.brand"
+            ],
+            "fld_premium_product_id": [
+              "Product.productID",
+              "Product.mpn"
+            ],
+            "fld_premium_sku": [
+              "Product.sku"
+            ],
+            "fld_premium_gtin": [
+              "Product.gtin13",
+              "Product.gtin12",
+              "Product.gtin"
+            ],
+            "fld_premium_product_url": [
+              "Product.url"
+            ],
+            "fld_premium_offer_url": [
+              "Product.offers.url"
+            ],
+            "fld_premium_offer_sku": [
+              "Product.offers.sku"
+            ],
+            "fld_premium_current_price": [
+              "Product.offers.price"
+            ],
+            "fld_premium_low_price": [
+              "Product.offers.lowPrice"
+            ],
+            "fld_premium_high_price": [
+              "Product.offers.highPrice"
+            ],
+            "fld_premium_currency": [
+              "Product.offers.priceCurrency"
+            ],
+            "fld_premium_availability": [
+              "Product.offers.availability"
+            ],
+            "fld_premium_color": [
+              "Product.color"
+            ],
+            "fld_premium_size": [
+              "Product.size",
+              "Product.size.name"
+            ],
+            "fld_premium_group_id": [
+              "Product.productGroupID"
+            ]
+          },
+          "hosts": [
+            "www.on.com"
+          ],
+          "url_patterns": [
+            "/en-us/products/*/mens/*",
+            "/en-us/products/*/womens/*"
+          ]
+        },
+        {
+          "template_id": "premium_on_css",
+          "engine": "css",
+          "mappings": {
+            "fld_premium_name": [
+              "[itemtype$='/Product'] [itemprop='name']"
+            ],
+            "fld_premium_current_price": [
+              "[itemtype$='/Product'] [itemprop='price']@content"
+            ],
+            "fld_premium_currency": [
+              "[itemtype$='/Product'] [itemprop='priceCurrency']@content"
+            ],
+            "fld_premium_sku": [
+              "[itemtype$='/Product'] [itemprop='sku']@content"
+            ]
+          },
+          "hosts": [
+            "www.on.com"
+          ],
+          "url_patterns": [
+            "/en-us/products/*/mens/*",
+            "/en-us/products/*/womens/*"
+          ]
+        },
+        {
+          "template_id": "premium_on_meta",
+          "engine": "meta",
+          "mappings": {
+            "fld_premium_name": [
+              "og:title"
+            ],
+            "fld_premium_product_url": [
+              "og:url"
+            ],
+            "fld_premium_current_price": [
+              "product:price:amount",
+              "og:price:amount"
+            ],
+            "fld_premium_currency": [
+              "product:price:currency",
+              "og:price:currency"
+            ],
+            "fld_premium_availability": [
+              "product:availability"
+            ],
+            "fld_premium_brand": [
+              "product:brand"
+            ],
+            "fld_premium_store": [
+              "literal:On"
+            ]
+          },
+          "hosts": [
+            "www.on.com"
+          ],
+          "url_patterns": [
+            "/en-us/products/*/mens/*",
+            "/en-us/products/*/womens/*"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "hoka",
+      "store": "HOKA",
+      "sampleUrl": "https://www.hoka.com/en/us/mens-everyday-running-gear/clifton-11/1176572.html?dwvar_1176572_color=BKCS",
+      "liveStatus": "disabled-provisional",
+      "templateStack": [
+        {
+          "template_id": "premium_hoka_jsonld",
+          "engine": "jsonld",
+          "mappings": {
+            "fld_premium_name": [
+              "Product.name"
+            ],
+            "fld_premium_brand": [
+              "Product.brand.name",
+              "Product.brand"
+            ],
+            "fld_premium_product_id": [
+              "Product.productID",
+              "Product.mpn"
+            ],
+            "fld_premium_sku": [
+              "Product.sku"
+            ],
+            "fld_premium_gtin": [
+              "Product.gtin13",
+              "Product.gtin12",
+              "Product.gtin"
+            ],
+            "fld_premium_product_url": [
+              "Product.url"
+            ],
+            "fld_premium_offer_url": [
+              "Product.offers.url"
+            ],
+            "fld_premium_offer_sku": [
+              "Product.offers.sku"
+            ],
+            "fld_premium_current_price": [
+              "Product.offers.price"
+            ],
+            "fld_premium_low_price": [
+              "Product.offers.lowPrice"
+            ],
+            "fld_premium_high_price": [
+              "Product.offers.highPrice"
+            ],
+            "fld_premium_currency": [
+              "Product.offers.priceCurrency"
+            ],
+            "fld_premium_availability": [
+              "Product.offers.availability"
+            ],
+            "fld_premium_color": [
+              "Product.color"
+            ],
+            "fld_premium_size": [
+              "Product.size",
+              "Product.size.name"
+            ],
+            "fld_premium_group_id": [
+              "Product.productGroupID"
+            ]
+          },
+          "hosts": [
+            "www.hoka.com"
+          ],
+          "url_patterns": [
+            "/en/us/*/*/[0-9]*.html"
+          ]
+        },
+        {
+          "template_id": "premium_hoka_css",
+          "engine": "css",
+          "mappings": {
+            "fld_premium_name": [
+              "[itemtype$='/Product'] [itemprop='name']"
+            ],
+            "fld_premium_current_price": [
+              "[itemtype$='/Product'] [itemprop='price']@content"
+            ],
+            "fld_premium_currency": [
+              "[itemtype$='/Product'] [itemprop='priceCurrency']@content"
+            ],
+            "fld_premium_sku": [
+              "[itemtype$='/Product'] [itemprop='sku']@content"
+            ]
+          },
+          "hosts": [
+            "www.hoka.com"
+          ],
+          "url_patterns": [
+            "/en/us/*/*/[0-9]*.html"
+          ]
+        },
+        {
+          "template_id": "premium_hoka_meta",
+          "engine": "meta",
+          "mappings": {
+            "fld_premium_name": [
+              "og:title"
+            ],
+            "fld_premium_product_url": [
+              "og:url"
+            ],
+            "fld_premium_current_price": [
+              "product:price:amount",
+              "og:price:amount"
+            ],
+            "fld_premium_currency": [
+              "product:price:currency",
+              "og:price:currency"
+            ],
+            "fld_premium_availability": [
+              "product:availability"
+            ],
+            "fld_premium_brand": [
+              "product:brand"
+            ],
+            "fld_premium_store": [
+              "literal:HOKA"
+            ]
+          },
+          "hosts": [
+            "www.hoka.com"
+          ],
+          "url_patterns": [
+            "/en/us/*/*/[0-9]*.html"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "ugg",
+      "store": "UGG",
+      "sampleUrl": "https://www.ugg.com/women-boots/classic-ultra-mini/1116109.html?dwvar_1116109_color=CRBO&dwvar_1116109_size=11",
+      "liveStatus": "disabled-provisional",
+      "templateStack": [
+        {
+          "template_id": "premium_ugg_jsonld",
+          "engine": "jsonld",
+          "mappings": {
+            "fld_premium_name": [
+              "Product.name"
+            ],
+            "fld_premium_brand": [
+              "Product.brand.name",
+              "Product.brand"
+            ],
+            "fld_premium_product_id": [
+              "Product.productID",
+              "Product.mpn"
+            ],
+            "fld_premium_sku": [
+              "Product.sku"
+            ],
+            "fld_premium_gtin": [
+              "Product.gtin13",
+              "Product.gtin12",
+              "Product.gtin"
+            ],
+            "fld_premium_product_url": [
+              "Product.url"
+            ],
+            "fld_premium_offer_url": [
+              "Product.offers.url"
+            ],
+            "fld_premium_offer_sku": [
+              "Product.offers.sku"
+            ],
+            "fld_premium_current_price": [
+              "Product.offers.price"
+            ],
+            "fld_premium_low_price": [
+              "Product.offers.lowPrice"
+            ],
+            "fld_premium_high_price": [
+              "Product.offers.highPrice"
+            ],
+            "fld_premium_currency": [
+              "Product.offers.priceCurrency"
+            ],
+            "fld_premium_availability": [
+              "Product.offers.availability"
+            ],
+            "fld_premium_color": [
+              "Product.color"
+            ],
+            "fld_premium_size": [
+              "Product.size",
+              "Product.size.name"
+            ],
+            "fld_premium_group_id": [
+              "Product.productGroupID"
+            ]
+          },
+          "hosts": [
+            "www.ugg.com"
+          ],
+          "url_patterns": [
+            "/women-*/*/[0-9]*.html",
+            "/men-*/*/[0-9]*.html"
+          ]
+        },
+        {
+          "template_id": "premium_ugg_css",
+          "engine": "css",
+          "mappings": {
+            "fld_premium_name": [
+              "[itemtype$='/Product'] [itemprop='name']"
+            ],
+            "fld_premium_current_price": [
+              "[itemtype$='/Product'] [itemprop='price']@content"
+            ],
+            "fld_premium_currency": [
+              "[itemtype$='/Product'] [itemprop='priceCurrency']@content"
+            ],
+            "fld_premium_sku": [
+              "[itemtype$='/Product'] [itemprop='sku']@content"
+            ]
+          },
+          "hosts": [
+            "www.ugg.com"
+          ],
+          "url_patterns": [
+            "/women-*/*/[0-9]*.html",
+            "/men-*/*/[0-9]*.html"
+          ]
+        },
+        {
+          "template_id": "premium_ugg_meta",
+          "engine": "meta",
+          "mappings": {
+            "fld_premium_name": [
+              "og:title"
+            ],
+            "fld_premium_product_url": [
+              "og:url"
+            ],
+            "fld_premium_current_price": [
+              "product:price:amount",
+              "og:price:amount"
+            ],
+            "fld_premium_currency": [
+              "product:price:currency",
+              "og:price:currency"
+            ],
+            "fld_premium_availability": [
+              "product:availability"
+            ],
+            "fld_premium_brand": [
+              "product:brand"
+            ],
+            "fld_premium_store": [
+              "literal:UGG"
+            ]
+          },
+          "hosts": [
+            "www.ugg.com"
+          ],
+          "url_patterns": [
+            "/women-*/*/[0-9]*.html",
+            "/men-*/*/[0-9]*.html"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": {
+    "executions": [],
+    "note": "Candidate URLs and provisional templates are a plan, not evidence of live extraction. No synthetic fallback is permitted."
+  }
+}

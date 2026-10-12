@@ -1,0 +1,15 @@
+# Only build inputs enter the container context: no Git data, credentials,
+# local environments, test outputs, or previously built distributions.
+**
+!pyproject.toml
+!_build_backend.py
+!PYPI_README.md
+!README.md
+!LICENSE
+!MANIFEST.in
+!requirements-workspace.txt
+!src/
+!src/pulsecrawl/
+!src/pulsecrawl/**
+**/__pycache__/
+**/*.py[cod]

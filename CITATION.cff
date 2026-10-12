@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use PulseCrawl or its research benchmark, cite this software artifact."
+title: "PulseCrawl: Design and Evaluation of a Framework for Policy-Constrained Recurring Web Crawling and Versioned Structured Datasets"
+type: software
+authors:
+  - name: "PulseCrawl contributors"
+version: "0.1.0"
+license: "AGPL-3.0-only"
+abstract: >-
+  A framework for policy-constrained recurring web crawling, structured
+  extraction, and versioned Parquet datasets, with explicit request policies,
+  durable safety invariants, URL-scoped template cascades, and a reproducible
+  comparative evaluation.
+keywords:
+  - web crawling
+  - web scraping
+  - distributed systems
+  - data lake
+  - information extraction
+repository-code: "https://github.com/pulsecrawl/PulseCrawl"

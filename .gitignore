@@ -1,0 +1,53 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*-plan.json
+crash.log
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+.venv/
+.coverage*
+.pytest_cache/
+
+# Firebase
+.firebase/
+firebase-debug.log*
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Env
+.env
+*.local
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Research runs (published summaries remain tracked)
+research/results/runs/
+research/.cache/
+research/.artifacts/
+research/thesis/build/
+research/thesis/private/
+research/thesis/generated/*
+!research/thesis/generated/README.md
+!research/thesis/generated/scf-evidence.tex
+
+# Local crawler runtime data
+storage/

@@ -1,0 +1,9 @@
+include LICENSE README.md PYPI_README.md pyproject.toml _build_backend.py
+include CHANGELOG.md CITATION.cff
+include Dockerfile Dockerfile.dockerignore requirements-workspace.txt
+recursive-include docs *.md
+recursive-include examples *.py *.md *.json
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include tools *.py
+global-exclude __pycache__ *.py[cod] .DS_Store
