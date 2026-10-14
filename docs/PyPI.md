@@ -14,8 +14,10 @@ created by these local files.
 
 The repository owner authorized a one-time manual production upload of `0.1.1`
 using the existing project API token, without TestPyPI rehearsal or a separate
-publishing-environment approval. This exception does not configure Trusted
-Publishing or attestations, does not weaken branch/tag protections, and does
+publishing-environment approval. The owner separately approved the same
+one-time manual upload route for `0.2.0`, after its full CI and package checks
+pass. These release-specific exceptions do not configure Trusted
+Publishing or attestations, do not weaken branch/tag protections, and do
 not authorize future uploads. Full CI on the exact release commit, clean-source
 builds, archive/privacy checks, and fresh-install verification remain required.
 Keep the token outside the public repository and never log it. The standard

@@ -2,6 +2,9 @@
 
 ## 0.2.0
 
+- Retry transient Windows atomic snapshot replacement conflicts within a
+  bounded window; persistent write failures still surface without deleting
+  the previous snapshot.
 - Standardize crawl queue terminology as **Pending URLs**, including the
   `PendingUrl` model, `PendingUrls` port, `MemoryPendingUrls` and
   `SQLitePendingUrls` adapters, `PendingUrlAdmissions`, and the
