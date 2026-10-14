@@ -51,6 +51,17 @@ The [standalone package examples](examples/README.md#standalone-package-examples
 can each be saved on their own and run against the PyPI package. The larger
 offline recipe demos are separate repository examples, not installed modules.
 
+## Research experiments and evidence
+
+The separate
+[PulseCrawl research-artifact repository](https://github.com/pulsecrawl/research-datasets)
+contains versioned synthetic inputs, registered experiment definitions,
+sanitized execution evidence, and analysis artifacts. It installs this public
+package from PyPI instead of copying the crawler implementation. That boundary
+keeps the software release, evaluation inputs, and recorded results independently
+versioned and auditable. Research artifacts pin the evaluated distribution and
+extras explicitly, currently `pulsecrawl[workspace]==0.1.0`.
+
 ## Local and hosted usage
 
 **Local: free, no account.** Crawl in memory with the exact engine the hosted
