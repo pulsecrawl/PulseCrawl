@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 
 import pytest
-from pulsecrawl.core.model import FetchResult, FrontierUrl, Record, RobotsCacheEntry, VisitedRow
+from pulsecrawl.core.model import FetchResult, PendingUrl, Record, RobotsCacheEntry, VisitedRow
 from pulsecrawl.core.urls import url_hash
 
 from pulsecrawl import Workspace
@@ -13,7 +13,7 @@ from pulsecrawl.local_dataset import LocalDatasetWriter
 from pulsecrawl.local_scheduler import recover_incomplete, validate_cron
 from pulsecrawl.sqlite_state import (
     EpochClock,
-    SQLiteFrontier,
+    SQLitePendingUrls,
     SQLiteHostGate,
     SQLiteRobotsCache,
     SQLiteVisitedStore,
@@ -381,7 +381,7 @@ def test_system_fallback_and_lifetime_budget(workspace):
     assert workspace.executions.get(execution["executionId"])["intent"]["scope"]["maxUrlsPerExecution"] == 10
 
 
-def test_resume_reconciles_crash_between_admission_and_frontier(workspace):
+def test_resume_reconciles_crash_between_admission_and_pending_urls(workspace):
     dataset = make_dataset(workspace)
     job = make_job(workspace, dataset)
     execution = workspace.jobs.prepare(job["jobId"])
@@ -406,7 +406,7 @@ def test_resume_reconciles_crash_between_admission_and_frontier(workspace):
     assert result["status"] == "succeeded"
     assert result["stats"]["urls_attempted"] == 1
     assert workspace.state.execute(
-        "SELECT count(*) n FROM frontier WHERE execution_id=?", (execution["executionId"],)
+        "SELECT count(*) n FROM pending_urls WHERE execution_id=?", (execution["executionId"],)
     ).fetchone()["n"] == 0
 
 
@@ -565,12 +565,12 @@ async def test_sqlite_adapters_are_durable_and_shared(workspace):
     hashed = url_hash("https://x/")
     await visited.add(execution_id, [VisitedRow(hashed, "https://x/", "queued", 0)])
     assert await visited.admitted(execution_id, hashed) and not await visited.seen(execution_id, hashed)
-    frontier = SQLiteFrontier(workspace.state, execution_id, lease_seconds=0)
-    await frontier.push([FrontierUrl("https://x/", 0)])
-    assert (await frontier.pop_ready(datetime.now().timestamp())).url == "https://x/"
-    assert (await frontier.pop_ready(datetime.now().timestamp())).url == "https://x/"
+    pending_urls = SQLitePendingUrls(workspace.state, execution_id, lease_seconds=0)
+    await pending_urls.push([PendingUrl("https://x/", 0)])
+    assert (await pending_urls.pop_ready(datetime.now().timestamp())).url == "https://x/"
+    assert (await pending_urls.pop_ready(datetime.now().timestamp())).url == "https://x/"
     await visited.add(execution_id, [VisitedRow(hashed, "https://x/", "fetched", 0)])
-    assert await visited.seen(execution_id, hashed) and frontier.pending_count() == 0
+    assert await visited.seen(execution_id, hashed) and pending_urls.pending_count() == 0
 
     robots = SQLiteRobotsCache(workspace.state)
     entry = RobotsCacheEntry("User-agent: *", 123.0, False)
@@ -644,7 +644,7 @@ def test_scheduler_reclaims_only_expired_execution_lease(workspace):
     )
     workspace.state.execute(
         """
-        INSERT INTO frontier(
+        INSERT INTO pending_urls(
           execution_id,url_hash,url,depth,not_before,rate_scheduled,
           rate_slot_expires_at,rate_interval_s,state,lease_until
         ) VALUES(?,?,?,?,0,0,0,0,'leased',99999999999)

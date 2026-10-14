@@ -122,7 +122,7 @@ pulsecrawl -w ./live-stock-workspace schedule start
 
 Replace the placeholder contact with your own. Schedules are at most hourly;
 setting one authorizes future crawls when a scheduler runs. Each execution
-starts a fresh seed frontier. Cases admit at most 1,000 unique URLs per run
+starts a fresh Pending URLs queue from its seeds. Cases admit at most 1,000 unique URLs per run
 and use depth six. Jobsearch, Chihuahua, stocks and clothes allow ten million
 lifetime page attempts; the other cases allow one million. Local runners use the case limits
 and a conservative one-request/second policy.

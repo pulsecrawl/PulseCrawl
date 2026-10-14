@@ -115,7 +115,7 @@ class SQLiteExecutionRepository:
                 """,
                 (f"execution ended as {status} before URL completion", execution_id),
             )
-            db.execute("DELETE FROM frontier WHERE execution_id=?", (execution_id,))
+            db.execute("DELETE FROM pending_urls WHERE execution_id=?", (execution_id,))
             if discard_staged:
                 db.execute(
                     "DELETE FROM staged_records WHERE execution_id=?", (execution_id,)

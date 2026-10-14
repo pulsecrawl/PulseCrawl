@@ -1,7 +1,7 @@
 """Durable, single-machine adapters for an open-source PulseCrawl workspace.
 
 SQLite is authoritative for operational state.  Python dictionaries may cache
-reads, but a process restart must never lose a frontier item, URL admission,
+reads, but a process restart must never lose a pending URL, URL admission,
 schedule, rate-limit clock, or dataset identity observation.
 """
 
@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 from typing import Sequence
 
-from pulsecrawl.domain.crawling.model import FrontierUrl, RobotsCacheEntry, VisitedRow
+from pulsecrawl.domain.crawling.model import PendingUrl, RobotsCacheEntry, VisitedRow
 from pulsecrawl.domain.crawling.politeness import (
     DEFAULT_DISPATCH_MARGIN_RATIO,
     guarded_interval_s,
@@ -66,7 +66,7 @@ class SQLiteVisitedStore:
                 )
                 if row.status != "queued":
                     db.execute(
-                        "DELETE FROM frontier WHERE execution_id=? AND url_hash=?",
+                        "DELETE FROM pending_urls WHERE execution_id=? AND url_hash=?",
                         (execution_id, row.url_hash),
                     )
 
@@ -77,7 +77,7 @@ class SQLiteVisitedStore:
         return int(row["n"])
 
 
-class SQLiteFrontier:
+class SQLitePendingUrls:
     def __init__(
         self,
         state: SQLiteState,
@@ -89,13 +89,13 @@ class SQLiteFrontier:
         self.execution_id = execution_id
         self.lease_seconds = lease_seconds
 
-    async def push(self, items: Sequence[FrontierUrl]) -> None:
+    async def push(self, items: Sequence[PendingUrl]) -> None:
         with self.state.transaction() as db:
             for item in items:
                 hashed = url_hash(item.url)
                 db.execute(
                     """
-                    INSERT INTO frontier(
+                    INSERT INTO pending_urls(
                       execution_id,url_hash,url,depth,not_before,rate_scheduled,
                       rate_slot_expires_at,rate_interval_s,retry_count,state,lease_until
                     ) VALUES(?,?,?,?,?,?,?,?,?, 'pending',NULL)
@@ -121,11 +121,11 @@ class SQLiteFrontier:
                     ),
                 )
 
-    async def pop_ready(self, now: float) -> FrontierUrl | None:
+    async def pop_ready(self, now: float) -> PendingUrl | None:
         with self.state.transaction() as db:
             row = db.execute(
                 """
-                SELECT * FROM frontier
+                SELECT * FROM pending_urls
                 WHERE execution_id=?
                   AND ((state='pending' AND not_before<=?)
                     OR (state='leased' AND lease_until<=?))
@@ -138,10 +138,10 @@ class SQLiteFrontier:
             if row is None:
                 return None
             db.execute(
-                "UPDATE frontier SET state='leased',lease_until=? WHERE sequence=?",
+                "UPDATE pending_urls SET state='leased',lease_until=? WHERE sequence=?",
                 (now + self.lease_seconds, row["sequence"]),
             )
-        return FrontierUrl(
+        return PendingUrl(
             url=row["url"],
             depth=int(row["depth"]),
             not_before=float(row["not_before"]),
@@ -155,7 +155,7 @@ class SQLiteFrontier:
         row = self.state.execute(
             """
             SELECT min(CASE WHEN state='leased' THEN lease_until ELSE not_before END) AS ready
-            FROM frontier WHERE execution_id=?
+            FROM pending_urls WHERE execution_id=?
             """,
             (self.execution_id,),
         ).fetchone()
@@ -163,7 +163,7 @@ class SQLiteFrontier:
 
     def pending_count(self) -> int:
         row = self.state.execute(
-            "SELECT count(*) AS n FROM frontier WHERE execution_id=?",
+            "SELECT count(*) AS n FROM pending_urls WHERE execution_id=?",
             (self.execution_id,),
         ).fetchone()
         return int(row["n"])

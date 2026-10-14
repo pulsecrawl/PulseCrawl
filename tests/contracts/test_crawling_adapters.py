@@ -7,20 +7,20 @@ import pytest
 from pulsecrawl import Workspace
 from pulsecrawl.adapters.outbound.memory.crawling import (
     FakeClock,
-    MemoryFrontier,
+    MemoryPendingUrls,
     MemoryHostGate,
     MemoryVisitedStore,
     MemoryRobotsCache,
 )
 from pulsecrawl.adapters.outbound.sqlite.crawling import (
-    SQLiteFrontier,
+    SQLitePendingUrls,
     SQLiteHostGate,
     SQLiteVisitedStore,
     SQLiteRobotsCache,
 )
 from pulsecrawl.adapters.outbound.sqlite.clock import EpochClock
 from pulsecrawl.application.time import readiness_time
-from pulsecrawl.domain.crawling.model import FrontierUrl, VisitedRow, RobotsCacheEntry
+from pulsecrawl.domain.crawling.model import PendingUrl, VisitedRow, RobotsCacheEntry
 from pulsecrawl.domain.crawling.urls import url_hash
 
 
@@ -29,7 +29,7 @@ def backend(request, tmp_path):
     clock = FakeClock()
     if request.param == "memory":
         yield SimpleNamespace(
-            frontier=MemoryFrontier(),
+            pending_urls=MemoryPendingUrls(),
             gate=MemoryHostGate(clock),
             visited=MemoryVisitedStore(),
             robots=MemoryRobotsCache(),
@@ -50,7 +50,7 @@ def backend(request, tmp_path):
         execution = workspace.jobs.prepare(job["jobId"])
         execution_id = execution["executionId"]
         yield SimpleNamespace(
-            frontier=SQLiteFrontier(workspace.state, execution_id),
+            pending_urls=SQLitePendingUrls(workspace.state, execution_id),
             gate=SQLiteHostGate(workspace.state, clock),
             visited=SQLiteVisitedStore(workspace.state),
             robots=SQLiteRobotsCache(workspace.state),
@@ -59,19 +59,19 @@ def backend(request, tmp_path):
         )
 
 
-async def test_frontier_never_returns_future_work_and_preserves_fifo_ties(backend):
+async def test_pending_urls_never_returns_future_work_and_preserves_fifo_ties(backend):
     items = [
-        FrontierUrl("https://example.com/late", 0, 1100),
-        FrontierUrl("https://example.com/first", 0, 1050),
-        FrontierUrl("https://example.com/second", 0, 1050),
+        PendingUrl("https://example.com/late", 0, 1100),
+        PendingUrl("https://example.com/first", 0, 1050),
+        PendingUrl("https://example.com/second", 0, 1050),
     ]
-    await backend.frontier.push(items)
-    assert await backend.frontier.pop_ready(1049) is None
-    assert await backend.frontier.next_ready_at() == 1050
-    assert (await backend.frontier.pop_ready(1050)).url.endswith("/first")
-    assert (await backend.frontier.pop_ready(1050)).url.endswith("/second")
-    assert await backend.frontier.pop_ready(1050) is None
-    assert (await backend.frontier.pop_ready(1100)).url.endswith("/late")
+    await backend.pending_urls.push(items)
+    assert await backend.pending_urls.pop_ready(1049) is None
+    assert await backend.pending_urls.next_ready_at() == 1050
+    assert (await backend.pending_urls.pop_ready(1050)).url.endswith("/first")
+    assert (await backend.pending_urls.pop_ready(1050)).url.endswith("/second")
+    assert await backend.pending_urls.pop_ready(1050) is None
+    assert (await backend.pending_urls.pop_ready(1100)).url.endswith("/late")
 
 
 async def test_admission_is_not_completion_and_is_execution_scoped(backend):

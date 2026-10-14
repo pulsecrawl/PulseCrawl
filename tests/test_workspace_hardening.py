@@ -120,7 +120,7 @@ def test_sqlite_migrates_sequentially_and_keeps_pre_migration_backup(tmp_path):
     try:
         assert state.schema_version == SCHEMA_VERSION
         assert state._has_column(state._db, "executions", "cancellation_mode")
-        assert state._has_column(state._db, "frontier", "retry_count")
+        assert state._has_column(state._db, "pending_urls", "retry_count")
     finally:
         state.close()
     assert path.with_name(
@@ -250,7 +250,7 @@ async def test_explicit_running_cancellation_settles_and_force_discards(workspac
         (prepared["executionId"],),
     ).fetchone()[0] == 0
     assert workspace.state.execute(
-        "SELECT count(*) FROM frontier WHERE execution_id=?",
+        "SELECT count(*) FROM pending_urls WHERE execution_id=?",
         (prepared["executionId"],),
     ).fetchone()[0] == 0
     assert workspace.state.execute(

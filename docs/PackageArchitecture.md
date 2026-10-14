@@ -48,7 +48,7 @@ being simple module aliases.
 
 Architecture tests enforce these dependency rules and forbid direct SQL and
 file operations in application code. Adapter contract tests exercise the
-same frontier, admission, pacing and robots semantics against memory and
+same Pending URLs, admission, pacing and robots semantics against memory and
 SQLite implementations. Service tests use fake ports without infrastructure.
 
 ## Where crawling and scraping run
@@ -58,7 +58,7 @@ It runs the queue and coordinates focused components:
 
 | Component | Responsibility |
 | --- | --- |
-| `FrontierAdmissions` | Scope, unique admission budget, seeds and URL publication |
+| `PendingUrlAdmissions` | Scope, unique admission budget, seeds and URL publication |
 | `CrawlDispatch` | Readiness, rate reservations and deferral without consuming another URL slot |
 | `CrawlPageProcessor` | One page's fetch, redirects, retries, snapshots, extraction and discovered links |
 | `RobotsService` | Robots policy through injected fetching, caching and time ports |
@@ -73,7 +73,28 @@ the parser and extractor ports; the crawl application does not import them.
 
 `bootstrap/crawling.py` supplies standard HTML strategies and a durable local
 runtime. `bootstrap/ephemeral.py` supplies the memory-backed runtime. Both
-use the same inward-facing ports for frontiers, ledgers, pacing, and output.
+use the same inward-facing ports for Pending URLs, ledgers, pacing, and output.
+
+## Pending URLs
+
+The **Pending URLs** queue contains admitted URLs awaiting processing, including
+URLs deferred by rate limits, scheduled for retry, or temporarily leased to a
+worker. It is distinct from visited-URL history and from a job's seed list.
+
+Low-level integrations use `PendingUrl` from `domain/crawling/model.py`,
+the `PendingUrls` protocol from `application/ports/crawling.py`, and the
+`EnginePorts.pending_urls` dependency. Concrete implementations are
+`MemoryPendingUrls` and `SQLitePendingUrls`; admission is coordinated by
+`PendingUrlAdmissions`. The compatibility import modules expose these same
+new names, without retaining old-name aliases. Top-level `crawl` and
+`Workspace` usage is unchanged.
+
+SQLite schema 5 stores this queue in `pending_urls`. Opening an older workspace
+creates a pre-migration backup and upgrades the table transactionally, retaining
+URL data, FIFO sequence IDs, readiness times, retry counts, and leases. Stop all
+processes using an older package before upgrading a workspace. Downgrading
+requires restoring the pre-migration backup rather than opening schema 5 with
+an older package.
 
 ## Lifecycle, time and durability contracts
 
@@ -88,9 +109,9 @@ use the same inward-facing ports for frontiers, ledgers, pacing, and output.
   twice.
 - Unique admission is not the same as successful completion. Retries and
   deferrals keep the admitted URL's slot. Runtime startup reconciles URLs
-  admitted before a crash but not yet published to the frontier.
+  admitted before a crash but not yet added to the Pending URLs queue.
 - Readiness deadlines must use the same clock coordinate as their gate and
-  frontier. Local durable adapters use epoch seconds so deadlines survive
+  Pending URLs queue. Local durable adapters use epoch seconds so deadlines survive
   process restarts; memory adapters use their clock's readiness coordinate.
   Elapsed timing must use a monotonic timer. Legacy clocks remain supported
   through the explicit readiness helper.

@@ -75,7 +75,7 @@ def fixture(*, fail_run=False, fail_open=False):
                     writer=SimpleNamespace(finalize=finalize),
                     engine=Engine(),
                     admitted=0,
-                    frontier=SimpleNamespace(pending_count=lambda: 0),
+                    pending_urls=SimpleNamespace(pending_count=lambda: 0),
                 )
             finally:
                 events.append("resources_closed")

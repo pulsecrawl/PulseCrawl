@@ -15,7 +15,7 @@ class SQLiteExecutionLease:
 
         The heartbeat makes native scheduler recovery safe without requiring
         Redis.  If a process disappears, its lease expires and the next
-        scheduler start resets any abandoned frontier leases before resuming.
+        scheduler start resets any abandoned pending URL leases before resuming.
         """
         now = time.time()
         with self.state.transaction() as db:
@@ -36,13 +36,13 @@ class SQLiteExecutionLease:
                 raise WorkspaceBusyError(
                     f"execution {execution_id} already has an active runner"
                 )
-            # No live execution lease means any frontier lease belongs to a
+            # No live execution lease means any pending URL lease belongs to a
             # dead or gracefully cancelled runner. Reclaim it immediately;
             # waiting for the per-item lease timeout would make an otherwise
             # recoverable local execution appear hung.
             db.execute(
                 """
-                UPDATE frontier SET state='pending',lease_until=NULL
+                UPDATE pending_urls SET state='pending',lease_until=NULL
                 WHERE execution_id=? AND state='leased'
                 """,
                 (execution_id,),

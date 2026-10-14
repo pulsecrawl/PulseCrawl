@@ -62,12 +62,12 @@ class LocalExecutionRuntimeFactory:
         from pulsecrawl.adapters.outbound.sqlite.clock import EpochClock
         from pulsecrawl.adapters.outbound.sqlite.crawling import (
             SQLiteVisitedStore,
-            SQLiteFrontier,
+            SQLitePendingUrls,
             SQLiteRobotsCache,
             SQLiteHostGate,
         )
         from pulsecrawl.adapters.inbound.python.intent import IntentMapper
-        from pulsecrawl.domain.crawling.model import FrontierUrl
+        from pulsecrawl.domain.crawling.model import PendingUrl
         from pulsecrawl.bootstrap.datasets import LocalDatasetWriter
 
         execution_id = execution["executionId"]
@@ -90,9 +90,9 @@ class LocalExecutionRuntimeFactory:
             publish_records=bool(execution["intent"].get("publishRecords", True)),
         )
         clock = EpochClock()
-        visited, frontier = (
+        visited, pending_urls = (
             SQLiteVisitedStore(self.state),
-            SQLiteFrontier(self.state, execution_id),
+            SQLitePendingUrls(self.state, execution_id),
         )
         admitted = visited.admitted_count(execution_id)
         async with fetch_resources(
@@ -100,14 +100,14 @@ class LocalExecutionRuntimeFactory:
         ) as (http, robots_http):
             # Reconcile admission-before-publication after a process loss.
             queued = self.state.execute(
-                "SELECT v.url,v.depth FROM visited v LEFT JOIN frontier f "
+                "SELECT v.url,v.depth FROM visited v LEFT JOIN pending_urls f "
                 "ON f.execution_id=v.execution_id AND f.url_hash=v.url_hash "
                 "WHERE v.execution_id=? AND v.status='queued' AND f.sequence IS NULL",
                 (execution_id,),
             ).fetchall()
             if queued:
-                await frontier.push(
-                    [FrontierUrl(url=row["url"], depth=row["depth"]) for row in queued]
+                await pending_urls.push(
+                    [PendingUrl(url=row["url"], depth=row["depth"]) for row in queued]
                 )
             engine = CrawlEngine(
                 engine_ports(
@@ -117,7 +117,7 @@ class LocalExecutionRuntimeFactory:
                     ),
                     visited=visited,
                     gate=SQLiteHostGate(self.state, clock),
-                    frontier=frontier,
+                    pending_urls=pending_urls,
                     pages=writer,
                     records=writer,
                     clock=clock,
@@ -131,5 +131,5 @@ class LocalExecutionRuntimeFactory:
                 writer=writer,
                 engine=engine,
                 admitted=admitted,
-                frontier=frontier,
+                pending_urls=pending_urls,
             )

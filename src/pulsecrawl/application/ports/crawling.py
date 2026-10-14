@@ -6,7 +6,7 @@ Semantics that adapters MUST preserve (encoded in tests/test_conformance.py):
 - HostGate.reserve returns 0 and consumes the live dispatch slot, or returns the seconds to
   wait WITHOUT consuming anything: a deferred caller must not push the
   window forward (otherwise bursty hosts snowball into ever-longer delays).
-- Frontier orders by `not_before`, then FIFO; `pop_ready` never returns an
+- PendingUrls orders by `not_before`, then FIFO; `pop_ready` never returns an
   item whose `not_before` is in the future.
 - VisitedStore.seen answers for this execution only.
 """
@@ -26,7 +26,7 @@ from typing import (
 
 from pulsecrawl.domain.crawling.model import (
     FetchResult,
-    FrontierUrl,
+    PendingUrl,
     PageSnapshot,
     Record,
     RobotsCacheEntry,
@@ -94,10 +94,12 @@ class HostGate(Protocol):
 
 
 @runtime_checkable
-class Frontier(Protocol):
-    async def push(self, items: Sequence[FrontierUrl]) -> None: ...
+class PendingUrls(Protocol):
+    """Order Pending URLs by readiness time, preserving FIFO ties."""
 
-    async def pop_ready(self, now: float) -> FrontierUrl | None: ...
+    async def push(self, items: Sequence[PendingUrl]) -> None: ...
+
+    async def pop_ready(self, now: float) -> PendingUrl | None: ...
 
     async def next_ready_at(self) -> float | None:
         """Earliest not_before among pending items, or None when empty."""

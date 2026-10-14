@@ -7,7 +7,7 @@ from pulsecrawl.core.engine import CrawlEngine
 from pulsecrawl.core.model import (
     Completed,
     FetchResult,
-    FrontierUrl,
+    PendingUrl,
     Parked,
     Politeness,
     Scope,
@@ -156,7 +156,7 @@ class TestCrawlEndToEnd:
         assert fetcher.calls == [first, second]
         assert outcome.stats.urls_attempted == 2
         assert outcome.stats.pages_discovered == 1
-        assert await ports.frontier.next_ready_at() is None
+        assert await ports.pending_urls.next_ready_at() is None
 
     async def test_redirect_without_valid_location_is_terminal_and_visible(self, ports):
         start = f"{SITE}/broken-redirect"
@@ -186,7 +186,7 @@ class TestCrawlEndToEnd:
         assert visited.status == "skipped"
         assert visited.error == "redirect without valid location"
 
-    async def test_transient_response_retries_through_frontier_and_gate(self, ports):
+    async def test_transient_response_retries_through_pending_urls_and_gate(self, ports):
         url = f"{SITE}/busy"
 
         class RecoveringFetcher:
@@ -384,10 +384,10 @@ class TestCrawlEndToEnd:
         )
         engine = CrawlEngine(ports, inline_wait_s=0.0)
         await engine.seed(intent)
-        queued = await ports.frontier.pop_ready(ports.clock.monotonic())
-        await ports.frontier.push(
+        queued = await ports.pending_urls.pop_ready(ports.clock.monotonic())
+        await ports.pending_urls.push(
             [
-                FrontierUrl(
+                PendingUrl(
                     url=queued.url,
                     depth=queued.depth,
                     rate_scheduled=True,
@@ -446,7 +446,7 @@ class TestCrawlEndToEnd:
         assert isinstance(outcome, Completed)
         assert outcome.stats.pages_fetched == 3        # /, /p/1, /p/2: p/2 only once
         assert outcome.stats.records_extracted == 3
-        assert outcome.stats.pages_discovered == 2     # unique URLs admitted to the frontier
+        assert outcome.stats.pages_discovered == 2     # unique URLs admitted to the pending_urls
         titles = {r.fields["title"] for r in ports.records.records}
         assert titles == {"Home", "One", "Two"}
         prices = {r.fields["price"] for r in ports.records.records}
@@ -554,7 +554,7 @@ class TestCrawlEndToEnd:
         outcome = await engine.run(intent)
         assert outcome.stats.urls_attempted == 1
         assert len(fetcher.calls) == 1
-        assert await ports.frontier.next_ready_at() is None
+        assert await ports.pending_urls.next_ready_at() is None
 
     async def test_budget_caps_discovery_admission(self, ports, fetcher):
         add_site(fetcher)
@@ -569,7 +569,7 @@ class TestCrawlEndToEnd:
         assert outcome.stats.urls_attempted == 2
         assert outcome.stats.pages_discovered == 1
         assert len(fetcher.calls) == 2
-        assert await ports.frontier.next_ready_at() is None
+        assert await ports.pending_urls.next_ready_at() is None
 
     async def test_failed_requests_consume_attempt_budget(self, ports, fetcher):
         intent = make_intent(

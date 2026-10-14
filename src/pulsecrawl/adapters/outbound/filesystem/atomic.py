@@ -5,7 +5,9 @@ from __future__ import annotations
 import errno
 import json
 import os
+import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -19,6 +21,28 @@ _SENSITIVE_RESPONSE_HEADERS = frozenset(
     {"authorization", "proxy-authorization", "cookie", "set-cookie"}
 )
 
+_REPLACE_ATTEMPTS = 8 if sys.platform == "win32" else 1
+
+
+def _replace_snapshot(source: str, destination: Path) -> None:
+    """Retry bounded Windows sharing conflicts, never delete the destination.
+
+    Concurrent replaces or readers can transiently deny the Windows rename.
+    Retry only the already-flushed staging file, for at most 1.27 seconds;
+    persistent access denials still reach the caller's normal error mapping.
+    """
+    for attempt in range(_REPLACE_ATTEMPTS):
+        try:
+            os.replace(source, destination)
+            return
+        except PermissionError as error:
+            if (
+                getattr(error, "winerror", None) not in {5, 32, 33}
+                or attempt + 1 == _REPLACE_ATTEMPTS
+            ):
+                raise
+            time.sleep(0.01 * 2**attempt)
+
 
 def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -29,7 +53,7 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
             handle.write(encoded)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        _replace_snapshot(temporary, path)
         _fsync_directory(path.parent)
     except OSError as exc:
         try:

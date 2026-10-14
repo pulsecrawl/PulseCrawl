@@ -2,15 +2,22 @@
 
 This guide applies to the **public** `pulsecrawl/PulseCrawl` repository, whose
 root contains `pyproject.toml`. Version `0.1.0` is the initial published alpha
-release. Version `0.1.1` updates the local-use description and examples without
-changing crawler behavior. Preparation is not
+release. Published version `0.1.1` updates the local-use description and examples
+without changing crawler behavior. Version `0.2.0` standardizes Pending URLs
+terminology and upgrades workspace SQLite state to schema 5. Low-level adapter
+imports and engine dependency keywords change; top-level `crawl` and `Workspace`
+calls remain unchanged. Stop older package processes before upgrading a
+workspace, and retain the automatic pre-migration backup for downgrades.
+Preparation is not
 publication: no account, publisher, GitHub environment, tag, or upload is
 created by these local files.
 
 The repository owner authorized a one-time manual production upload of `0.1.1`
 using the existing project API token, without TestPyPI rehearsal or a separate
-publishing-environment approval. This exception does not configure Trusted
-Publishing or attestations, does not weaken branch/tag protections, and does
+publishing-environment approval. The owner separately approved the same
+one-time manual upload route for `0.2.0`, after its full CI and package checks
+pass. These release-specific exceptions do not configure Trusted
+Publishing or attestations, do not weaken branch/tag protections, and do
 not authorize future uploads. Full CI on the exact release commit, clean-source
 builds, archive/privacy checks, and fresh-install verification remain required.
 Keep the token outside the public repository and never log it. The standard

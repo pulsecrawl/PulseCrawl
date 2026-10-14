@@ -25,7 +25,7 @@ from pulsecrawl.domain.crawling.model import (
 from pulsecrawl.application.ports.crawling import (
     Clock,
     Fetcher,
-    Frontier,
+    PendingUrls,
     HostGate,
     PageSink,
     RecordSink,
@@ -44,7 +44,7 @@ from pulsecrawl.domain.crawling.urls import (
 )
 
 
-from pulsecrawl.application.crawling.admission import FrontierAdmissions
+from pulsecrawl.application.crawling.admission import PendingUrlAdmissions
 from pulsecrawl.application.crawling.dispatch import CrawlDispatch
 from pulsecrawl.application.crawling.pages import CrawlPageProcessor
 
@@ -55,7 +55,7 @@ class EnginePorts:
     robots: RobotsPolicy
     visited: VisitedStore
     gate: HostGate
-    frontier: Frontier
+    pending_urls: PendingUrls
     pages: PageSink
     records: RecordSink
     clock: Clock
@@ -78,7 +78,7 @@ class CrawlEngine:
     ):
         self._p, self._park_threshold_s = ports, park_threshold_s
         self._should_stop = should_stop or (lambda: False)
-        self._admissions = FrontierAdmissions(
+        self._admissions = PendingUrlAdmissions(
             ports,
             remaining=admission_remaining,
             inline_wait_s=inline_wait_s,
@@ -106,12 +106,12 @@ class CrawlEngine:
 
         while stats.urls_attempted < intent.scope.max_pages and not self._should_stop():
             now = readiness_time(self._p.clock)
-            item = await self._p.frontier.pop_ready(now)
+            item = await self._p.pending_urls.pop_ready(now)
 
             if item is None:
-                next_ready = await self._p.frontier.next_ready_at()
+                next_ready = await self._p.pending_urls.next_ready_at()
                 if next_ready is None:
-                    break  # frontier drained: done
+                    break  # pending_urls drained: done
                 wait = max(next_ready - now, 0.0)
                 if wait > self._park_threshold_s:
                     return Parked(stats=stats, resume_after_s=wait)

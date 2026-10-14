@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.0
+
+- Retry transient Windows atomic snapshot replacement conflicts within a
+  bounded window; persistent write failures still surface without deleting
+  the previous snapshot.
+- Standardize crawl queue terminology as **Pending URLs**, including the
+  `PendingUrl` model, `PendingUrls` port, `MemoryPendingUrls` and
+  `SQLitePendingUrls` adapters, `PendingUrlAdmissions`, and the
+  `EnginePorts.pending_urls` dependency. Low-level integrations must update
+  their imports and dependency keyword; top-level `crawl` and `Workspace`
+  calls are unchanged. No old-name Python aliases are retained.
+- Upgrade SQLite state to schema 5, preserving queued URLs, retry counters,
+  readiness times, leases, and FIFO sequence IDs. Existing workspaces receive
+  a pre-migration backup automatically; older package versions cannot reopen
+  schema-5 workspaces, so keep that backup if a downgrade is required.
+
 ## Publishing preparation
 
 - Serialize shared SQLite cursor reads as well as statement execution.
@@ -54,7 +70,7 @@ The initial public alpha release is 0.1.0.
   provisioners, runnable per-category entry points, and offline workflow tests.
 - Recipe validation using saved HTML or explicitly opted-in governed sampling;
   no samples checked is inconclusive rather than a successful validation.
-- `pulsecrawl.core`, a portable crawl engine with bounded frontiers,
+- `pulsecrawl.core`, a portable crawl engine with bounded pending URL queues,
   robots handling, request pacing, redirect reauthorization, response-size
   limits, typed extraction, and explicit private-network opt-in.
 - Top-level `pulsecrawl` APIs for synchronous local crawling and portable workspaces with SQLite

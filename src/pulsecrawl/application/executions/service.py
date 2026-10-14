@@ -177,9 +177,9 @@ class ExecutionService:
         )
         self._write_snapshot(execution_id)
         intent, writer, engine = runtime.intent, runtime.writer, runtime.engine
-        admitted, frontier = runtime.admitted, runtime.frontier
+        admitted, pending_urls = runtime.admitted, runtime.pending_urls
         try:
-            if admitted == 0 and frontier.pending_count() == 0:
+            if admitted == 0 and pending_urls.pending_count() == 0:
                 await engine.seed(intent)
             outcome = await engine.run(intent)
             if self._cancellation_requested(execution_id):
@@ -256,7 +256,7 @@ class ExecutionService:
                 log_event(LOGGER, "execution_cancelled", execution_id=execution_id)
                 return self.get(execution_id)
             # A graceful scheduler/container stop is resumable.  Durable
-            # frontier, staged rows, lifetime reservation, and running state
+            # pending_urls, staged rows, lifetime reservation, and running state
             # remain intact; the runner lease is released in ``finally``.
             self._write_snapshot(execution_id)
             raise

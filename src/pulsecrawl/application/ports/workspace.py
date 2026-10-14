@@ -69,7 +69,7 @@ class ExecutionRuntimeFactory(Protocol):
         allow_private_networks=False,
         should_stop=None,
     ) -> AbstractAsyncContextManager:
-        """Own resources and reconcile admitted-but-unpublished frontier entries."""
+        """Own resources and reconcile admitted-but-unpublished pending URLs."""
         ...
 
 
