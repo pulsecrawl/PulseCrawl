@@ -1,13 +1,13 @@
 # PulseCrawl
 
+**[GitHub repository](https://github.com/pulsecrawl/PulseCrawl)**
+
 PulseCrawl is a safety-governed Python crawler and structured extraction SDK.
 One Python distribution supports in-memory crawling, durable local workspaces,
 and an optional client for operator-hosted services. Local use needs no account
 or cloud service. Requires Python 3.11 or newer.
 
 ## Installation
-
-After a release is published to PyPI:
 
 ```bash
 python -m pip install pulsecrawl
