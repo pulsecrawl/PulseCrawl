@@ -16,12 +16,35 @@ data-integrity, and public-source boundaries.
 6. Sign every commit with `git commit -s` to certify the
    [Developer Certificate of Origin 1.1](DCO.md).
 
+## Development installation
+
+Ordinary users install `pulsecrawl` or `pulsecrawl[workspace]` from PyPI; they
+do not need a source checkout. Contributors testing unreleased code should
+clone the public repository and install it in an isolated environment:
+
+```bash
+git clone https://github.com/pulsecrawl/PulseCrawl.git
+cd PulseCrawl
+python -m venv .venv
+```
+
+Activate it with `source .venv/bin/activate` on macOS/Linux, or
+`.venv\Scripts\Activate.ps1` in Windows PowerShell. Then:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -e '.[dev]'
+```
+
+The `dev` extra includes the workspace runtime and test/lint tools. Editable
+installation intentionally selects this checkout rather than the published wheel.
+
 ## Local checks
 
 Run the checks relevant to the change:
 
 ```bash
-cd . && python -m pytest
+python -m pytest
 python -m ruff check . scripts
 python scripts/check-secrets.py
 python scripts/export-oss.py --output <outside-repository-path>
