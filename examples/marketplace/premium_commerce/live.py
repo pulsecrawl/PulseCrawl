@@ -1,6 +1,7 @@
 """Opt-in real-website exercise; no HTML archive and no synthetic fallback.
 
-Run from the SDK examples directory: python -m marketplace.premium_commerce.live
+Preview from the repository root (no network):
+python -m examples.marketplace.premium_commerce.live plan
 The published manifest is a disabled plan, not evidence of completed crawling.
 """
 

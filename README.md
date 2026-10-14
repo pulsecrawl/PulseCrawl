@@ -1,7 +1,7 @@
 # PulseCrawl
 
-A safety-governed Python crawler and structured extraction SDK. Crawl in memory,
-keep durable local workspaces, or connect explicitly to an operator-hosted service.
+A local open-source Python crawler and structured extraction SDK. Crawl in
+memory or keep durable, portable workspaces on your own machine.
 Local use is free and needs no account, Docker, Redis, or database server.
 Requires **Python 3.11 or newer**. PulseCrawl is alpha software; see the
 [support policy](SUPPORT.md) before relying on API or workspace compatibility.
@@ -15,9 +15,9 @@ No repository clone is needed. For durable workspaces, Parquet, SQL, and schedul
 python -m pip install 'pulsecrawl[workspace]'
 ```
 
-For in-memory crawling and the HTTP client only, use `python -m pip install pulsecrawl`.
-Optional extras are `sql` for querying in-memory results, `workspace` for the
-complete local runtime, and `cloud` for credential storage and workspace sync.
+For in-memory crawling only, use `python -m pip install pulsecrawl`.
+Optional extras are `sql` for querying in-memory results and `workspace` for
+the complete local runtime.
 Check the installed version with `python -m pip show pulsecrawl`.
 Source-checkout and editable installation instructions are in
 [CONTRIBUTING.md](CONTRIBUTING.md), not required for ordinary package use.
@@ -51,11 +51,10 @@ The [standalone package examples](examples/README.md#standalone-package-examples
 can each be saved on their own and run against the PyPI package. The larger
 offline recipe demos are separate repository examples, not installed modules.
 
-## Local and hosted usage
+## Local crawling and workspaces
 
-**Local: free, no account.** Crawl in memory with the exact engine the hosted
-product runs, or use a portable workspace for durable SQLite state, Parquet
-dataset versions, embedded DuckDB queries, and hourly schedules:
+Crawl in memory, or use a portable workspace for durable SQLite state,
+Parquet dataset versions, embedded DuckDB queries, and hourly schedules.
 
 The following example makes live HTTP requests (including robots checks).
 Before running it, review the target's access policy and replace the contact
@@ -82,18 +81,21 @@ print(result.records)
 The `workspace` extra adds DuckDB and PyArrow as Python dependencies; there is
 no database server to operate. Use the `Workspace` API below for durable storage.
 
-Network requests reject loopback, private, link-local, reserved, and cloud
-metadata address ranges by default. For an explicitly trusted intranet or
+Network requests reject loopback, private, link-local, reserved, and
+instance-metadata address ranges by default. For an explicitly trusted intranet or
 local test server, callers may opt in with `allow_private_networks=True`.
 Never enable that option for untrusted job definitions or URLs. Set a user
 agent containing a working operator contact and review the repository's
 responsible-crawling policy before using live targets.
 
 This native directory workflow is the default open-source deployment. Docker
-is optional; users do not need Docker, Redis, a cloud account, or a background
+is optional; users do not need Docker, Redis, an account, or a background
 database service. If the native scheduler is interrupted, its SQLite runner
 lease expires (or is released on graceful shutdown) and startup resumes the
 durable execution frontier without creating another execution intent.
+
+The following creates a job and enables an hourly schedule; it does not start
+the scheduler. Replace the contact placeholder before starting scheduled crawls.
 
 ```python
 from pulsecrawl import Workspace
@@ -113,6 +115,11 @@ with Workspace.init("./my-crawls") as pc:
             "maxDepth": 6,
             "maxUrlsPerExecution": 1_000,
             "maxUrlsTotal": 1_000_000,
+        },
+        politeness={
+            "respectRobotsTxt": True,
+            "requestsPerSecond": 1.0,
+            "userAgent": "YourCrawler/1.0 (+https://your-domain.example/contact)",
         },
     )
     pc.schedules.set(job["jobId"], "4 * * * *", timezone_name="UTC")
@@ -161,173 +168,24 @@ retention, and workspace repair also support legacy `manifests/snapshots/`
 files and the old `snapshot` pointer key without moving historical files.
 `keep_snapshots` and `--keep-snapshots` remain compatibility aliases.
 SQLite is intended for one host (including several processes on that host) and
-must live on local disk, not NFS. Multi-host execution uses the hosted cloud
-adapters or a separately configured distributed backend.
+must live on local disk, not NFS. The local SQLite backend does not support
+multi-host execution.
 
 The local Python and CLI resources cover the product workflow, field, schema,
 template, dataset and job definitions; execution/resume; schedules; Parquet
 files and versions; SQL; URL pages; and compaction. Their JSON snapshots plus
-SQLite and Parquet live entirely inside the workspace directory. Hosted-only
-concerns such as organizations, API keys, Firebase authentication, the web
-console, multi-machine dispatch, and SAS download links intentionally stay in
-the paid control plane.
+SQLite and Parquet live entirely inside the workspace directory.
 
 The repository's Docker scheduler runs as an unprivileged user, has a bounded
 workspace-validation health check, and uses Docker's `none` log driver. Job
 and execution state remains inspectable through the CLI and JSON snapshots
 without sending console logs to a metered service.
 
-**Hosted: crawls run in the cloud** and results become durable, queryable
-Parquet datasets:
-
-```python
-from pulsecrawl import PulseCrawl
-
-pc = PulseCrawl(
-    api_key="pk_live_...",
-    base_url="https://api.example/v1",
-)
-job = pc.jobs.create(
-    "multi-site news",
-    seeds=["https://one.example/news", "https://two.example/latest"],
-    template_stack=[
-        {
-            "template_id": "tmpl_one_article",
-            "hosts": ["one.example"],
-            "url_patterns": ["/news/*"],
-        },
-        {
-            "template_id": "tmpl_two_article",
-            "hosts": ["two.example"],
-            "url_patterns": ["/articles/*"],
-        },
-    ],
-    scope={
-        "max_depth": 6,
-        "max_urls_per_execution": 1_000,
-        "max_urls_total": 1_000_000,
-    },
-    dataset_id=pc.datasets.create(
-        "pages",
-        schema_id="schema_sys_page_summary_v1",
-        mode="new_urls_only",
-        identity_field="_source_url",
-    )["datasetId"],
-)
-execution = pc.jobs.run(job["jobId"])
-final = pc.executions.wait(execution["executionId"])
-print(pc.datasets.files(job["datasetId"]))
-```
-
-Every execution starts a new queue frontier from the seeds. The per-execution
-frontier admits at most `maxUrlsPerExecution` unique URLs, so page HTTP attempts
-can never exceed that bound. The cumulative limit is settled from actual page
-HTTP attempts, including failed responses; robots/depth skips do not consume
-the cumulative capacity. A scheduled job
-therefore runs with up to 1,000 attempts each hour until its cumulative one
-million-attempt ceiling is reached.
-
-Hosted mode intentionally has no built-in service endpoint. Pass `base_url`
-explicitly or set `PULSECRAWL_BASE_URL`; this prevents an installed SDK from
-silently sending credentials or job definitions to a development deployment.
-
-### Connect an OSS workspace to cloud
-
-Cloud access is explicit and profile-based. Install the optional keyring
-integration, create a least-privilege key in the hosted console, and connect it
-to a named profile. The profile JSON contains only endpoint, organization, and
-key identifiers; the secret is stored in the operating-system credential
-store. CI may provide `PULSECRAWL_API_KEY` instead; when that variable is set,
-`cloud connect` writes only the non-secret profile metadata and does not require
-or modify a keyring backend.
-
-```bash
-python -m pip install 'pulsecrawl[workspace,cloud]'
-pulsecrawl cloud connect --profile production --base-url https://api.example/v1
-pulsecrawl cloud whoami --profile production
-
-# Preview and then idempotently import local definitions.
-pulsecrawl -w ./my-crawls cloud plan --profile production
-pulsecrawl -w ./my-crawls cloud push --profile production
-
-# Import definitions, map the local job ID, and start its cloud execution.
-pulsecrawl -w ./my-crawls cloud run job_local_id --profile production
-
-# Download the active, version-consistent Parquet snapshot. Signed artifact
-# requests never receive the PulseCrawl API key.
-pulsecrawl cloud pull ds_cloud_id ./cloud-results --profile production
-```
-
-`cloud plan` refuses duplicate names, dangling references, and incompatible
-same-name resources. `cloud push` preserves field/schema/template/dataset/job
-relationships, URL-scoped template stacks, and paused schedules. It does not
-upload credentials or silently contact cloud from a local command. Hosted
-mutations use stable per-request idempotency keys and retry only transient
-transport/429/502/503/504 failures; reads use bounded exponential backoff and
-honor `Retry-After`.
-
-Hosted crawling always honors robots.txt. Request pacing is shared by website
-across every job in the organization, so two jobs targeting the same origin do
-not each receive a separate allowance. A separate platform-wide origin gate
-provides a safety floor across organizations, and a robots `Crawl-delay` can
-only slow that origin further. Every scheduled and final dispatch interval has
-a 10% conservative margin. The configured rate remains a maximum: this small
-throughput reserve reduces client-dispatch-to-wire jitter from compressing the
-spacing observed by an origin, without claiming control over arbitrary network
-reordering. Owners can inspect or change their organization
-ceiling through the SDK:
-
-```python
-org = pc.organizations.get("org_...")
-print(org["rateLimits"]["requestsPerSecondPerWebsite"])
-pc.organizations.update(
-    org["orgId"], requests_per_second_per_website=1,
-)
-```
-
-SQL reads all committed Parquet parts across all executions. URL history is
-also directly pageable without writing SQL:
-
-```python
-for item in pc.datasets.iter_urls(job["datasetId"], newness="repeat"):
-    print(item["urlIdentity"], item["executionCount"], item["lastSeenAt"])
-
-for item in pc.executions.iter_urls(final["executionId"], newness="new"):
-    print(item["url"], item["isNew"])
-```
-
-Dataset URL pages use the durable identity ledger. `newness="new"` means the
-identity has appeared in one execution; `newness="repeat"` means it has
-appeared in more than one. Execution pages use that run's `_is_new_url` value.
-`new_urls_only` suppresses a URL only when it appeared in a prior execution;
-if a first-seen page yields multiple legitimate entities, all of them remain.
-Use a schema field ID with type `url` as `identity_field` when canonical URLs
-are extracted separately from `_source_url`.
-
-Schedules use semantic five-field cron expressions, IANA time zones, and a
-minimum cadence of one hour:
-
-```python
-schedule = pc.schedules.set(
-    job["jobId"],
-    "0 9 * * 1-5",
-    timezone="America/Denver",
-)
-print(schedule["nextRunAt"])
-pc.schedules.pause(job["jobId"])
-pc.schedules.resume(job["jobId"])
-```
-
-Each authored template is tried only on matching final URLs. If the entire
-authored stack misses, the service tries compatible system templates and marks
-that host as `needsTemplate` in the execution's `templateCoverage` report.
-
 Runnable examples and recipe libraries live in [examples/](examples/).
 After downloading the repository examples and installing the published package,
 start without network access with `python -m examples.local_quickstart` or
 `python -m examples.workspace_quickstart --workspace ./quickstart-workspace`.
-The hosted quickstart prints a plan unless `--apply` is supplied. See the
-[example guide](examples/README.md) for shared structure, live opt-in flags,
+See the [example guide](examples/README.md) for shared structure, live opt-in flags,
 and offline validation commands.
 
 External agents can help compile and validate deterministic templates without
@@ -366,9 +224,8 @@ The [crawl engine](src/pulsecrawl/application/crawling/engine.py) coordinates
 URL admission, dispatch, page processing, and record extraction. Requests run
 through the [HTTP fetcher](src/pulsecrawl/adapters/outbound/http/fetcher.py), and
 scraping strategies live in [HTML extraction](src/pulsecrawl/adapters/outbound/html/extraction/).
-Local and hosted callers supply different adapters to the same engine;
-hosted authentication, billing, web UI, and cloud dispatch remain outside
-the public package. Existing public imports and workspace formats are preserved.
+Python and CLI entry points use the same engine through local adapters.
+Existing public imports and workspace formats are preserved.
 
 See the [architecture guide](docs/PackageArchitecture.md) for the component map,
 dependency rules, durability contracts, and extension points. Follow

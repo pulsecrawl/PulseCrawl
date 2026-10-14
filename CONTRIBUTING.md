@@ -8,7 +8,7 @@ data-integrity, and public-source boundaries.
 
 1. Create a focused branch from the default branch.
 2. Do not commit credentials, third-party page bodies, private crawl data,
-   signed URLs, cloud logs, generated virtual environments, or build outputs.
+   signed URLs, sensitive logs, generated virtual environments, or build outputs.
 3. Add or update tests next to the behavior they cover.
 4. Preserve the documented top-level API when changing `pulsecrawl.core`.
 5. Update public documentation when behavior, security assumptions, or

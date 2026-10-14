@@ -1,6 +1,6 @@
 """Vendor-neutral external-agent template authoring example.
 
-Replace ``external_agent`` with a person, local model, or hosted model adapter.
+Replace ``external_agent`` with a person, local model, or ordinary-code adapter.
 PulseCrawl never invokes that component during scheduled extraction.
 """
 

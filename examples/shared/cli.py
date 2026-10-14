@@ -4,16 +4,15 @@ import argparse
 import os
 from pathlib import Path
 
-from pulsecrawl import PulseCrawl, Workspace
+from pulsecrawl import Workspace
 
 from .catalog import CASES
-from .hosted import HostedCaseProvisioner
 from .local import LocalCaseProvisioner
 from .safety import operator_user_agent
 
 
-def _arguments(mode, case_key, argv):
-    parser = argparse.ArgumentParser(description=f"Provision {mode} example jobs.")
+def _arguments(case_key, argv):
+    parser = argparse.ArgumentParser(description="Provision local example jobs.")
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument("--case", choices=sorted(CASES), default=case_key)
     selection.add_argument("--all", action="store_true")
@@ -25,8 +24,7 @@ def _arguments(mode, case_key, argv):
     )
     parser.add_argument("--timezone", default="UTC")
     parser.add_argument("--user-agent", default=os.environ.get("PULSECRAWL_USER_AGENT"))
-    if mode == "local":
-        parser.add_argument("--workspace", type=Path, default=Path("./workspace"))
+    parser.add_argument("--workspace", type=Path, default=Path("./workspace"))
     args = parser.parse_args(argv)
     if not args.all and not args.case:
         parser.error("pass --case or --all")
@@ -61,16 +59,6 @@ def _run(provisioner, args):
 
 
 def main_local(case_key=None, argv=None):
-    _parser, args = _arguments("local", case_key, argv)
+    _parser, args = _arguments(case_key, argv)
     with Workspace.init(args.workspace) as workspace:
         _run(LocalCaseProvisioner(workspace), args)
-
-
-def main_hosted(case_key=None, argv=None):
-    parser, args = _arguments("hosted", case_key, argv)
-    api_key = os.environ.get("PULSECRAWL_API_KEY")
-    base_url = os.environ.get("PULSECRAWL_BASE_URL")
-    if not api_key or not base_url:
-        parser.error("set PULSECRAWL_API_KEY and PULSECRAWL_BASE_URL")
-    with PulseCrawl(api_key=api_key, base_url=base_url) as client:
-        _run(HostedCaseProvisioner(client), args)

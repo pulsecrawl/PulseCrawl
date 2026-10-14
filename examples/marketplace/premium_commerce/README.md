@@ -74,9 +74,12 @@ JSON-LD follows the first offer; it does not enumerate all variants. Generic JSO
 
 `research.md` and `robots-audit-2026-10-11.json` retain the earlier source review and robots-only observations. That audit fetched no product pages. The offline module still rejects `--live`; use the separate reviewed workflow above.
 
+For contributor tests, first follow the development installation in
+[CONTRIBUTING.md](../../../CONTRIBUTING.md), then run from the repository root
+with that environment activated:
+
 ```bash
-cd .
-.venv/bin/python -m pytest tests/test_premium_commerce_example.py tests/test_live_commerce_example.py -q --no-cov
+python -m pytest tests/test_premium_commerce_example.py tests/test_live_commerce_example.py -q --no-cov
 ```
 
 Contract tests inject transport responses and use temporary workspaces. They verify guardrails, fresh robots decisions, failure visibility, nullable observations, publication and version queries. They are not real-website case-study results.

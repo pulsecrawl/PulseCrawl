@@ -420,23 +420,6 @@ def build_suppliers(field_ids: Mapping[str, str] | None = None) -> list[dict[str
     return suppliers
 
 
-def build_stack_entries(
-    suppliers: list[dict[str, Any]], template_ids_by_name: Mapping[str, str]
-) -> list[dict[str, Any]]:
-    """Build ordered entries for the proposed Python SDK ``template_stack``."""
-    entries: list[dict[str, Any]] = []
-    for supplier in suppliers:
-        for template in supplier["templates"]:
-            entries.append(
-                {
-                    "template_id": template_ids_by_name[template["name"]],
-                    "hosts": list(supplier["hosts"]),
-                    "url_patterns": list(supplier["url_patterns"]),
-                }
-            )
-    return entries
-
-
 def seeds() -> list[str]:
     """Return all seeds, including suppliers left to system fallback."""
     return [spec["seed"] for spec in SUPPLIER_SPECS]

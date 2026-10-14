@@ -4,6 +4,7 @@ from dataclasses import replace
 import importlib
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 from unittest.mock import Mock
@@ -13,10 +14,9 @@ import pytest
 PACKAGE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PACKAGE))
 
-from examples import hosted_quickstart, local_quickstart, workspace_quickstart
+from examples import local_quickstart, workspace_quickstart
 from examples.shared.catalog import CASES
 from examples.shared.fixtures import EXAMPLE_URL, FixtureFetcher
-from examples.shared.hosted import HostedCaseProvisioner
 from examples.shared.local import LocalCaseProvisioner
 from examples.shared.validation import GovernedSampleReader, RecipeValidator
 from pulsecrawl import Workspace
@@ -34,14 +34,13 @@ def _environment():
 def test_every_example_import_is_network_and_resource_creation_free(tmp_path):
     code = """
 import importlib, pkgutil, socket
-from pulsecrawl import Workspace, PulseCrawl
+from pulsecrawl import Workspace
 from pulsecrawl.adapters.outbound.http.fetcher import AiohttpFetcher
 def forbidden(*args, **kwargs):
     raise AssertionError("examples must not create resources or connect on import")
 socket.socket.connect = forbidden
 socket.create_connection = forbidden
 Workspace.init = forbidden
-PulseCrawl.__init__ = forbidden
 AiohttpFetcher.__init__ = forbidden
 import examples
 modules = list(pkgutil.walk_packages(examples.__path__, "examples."))
@@ -64,11 +63,8 @@ for module in modules:
 DIRECT_COMMANDS = [
     "local_quickstart.py",
     "workspace_quickstart.py",
-    "hosted_quickstart.py",
     "local_cases.py",
-    "hosted_cases.py",
-    "chihuahua_news.py",
-    *[f"{key}/{mode}.py" for key in CASES for mode in ("local", "hosted")],
+    *[f"{key}/local.py" for key in CASES],
     "jobsearch/validate_recipes.py",
     "marketplace/clothes/validate_recipes.py",
     "marketplace/other_industries/validate_recipes.py",
@@ -93,7 +89,7 @@ def test_direct_entry_points_help_works_from_another_directory(entry, tmp_path):
 @pytest.mark.parametrize(
     "module",
     [
-        "examples.news.chihuahua.hosted",
+        "examples.news.chihuahua.local",
         "examples.news.stocks.local",
         "examples.marketplace.premium_commerce.local",
         "examples.marketplace.premium_commerce.live",
@@ -111,6 +107,26 @@ def test_module_entry_points_help_is_safe(module, tmp_path):
     )
     assert result.returncode == 0, result.stderr
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("module", [
+    "examples.marketplace.premium_commerce.local",
+    "examples.marketplace.premium_commerce.live",
+])
+def test_premium_commerce_documented_module_command_works_from_repository_root(module):
+    description = importlib.import_module(module).__doc__
+    documented_module = re.search(r"python -m ([\w.]+)", description)[1]
+    assert documented_module == module
+    result = subprocess.run(
+        [sys.executable, "-m", documented_module, "--help"],
+        cwd=PACKAGE,
+        env=_environment(),
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "usage:" in result.stdout
 
 
 def test_memory_quickstart_uses_fictional_transport():
@@ -134,40 +150,11 @@ def test_workspace_quickstart_publishes_and_refuses_to_overwrite(tmp_path):
         )["rows"] == [[1]]
 
 
-def test_quickstarts_require_explicit_live_arguments(monkeypatch, capsys):
+def test_quickstart_requires_explicit_live_arguments(monkeypatch):
     monkeypatch.delenv("PULSECRAWL_USER_AGENT", raising=False)
     with pytest.raises(SystemExit) as error:
         local_quickstart.main(["--live"])
     assert error.value.code == 2
-    with pytest.raises(SystemExit) as error:
-        hosted_quickstart.main(["--run"])
-    assert error.value.code == 2
-    monkeypatch.setattr(
-        hosted_quickstart,
-        "PulseCrawl",
-        Mock(side_effect=AssertionError("must not connect")),
-    )
-    hosted_quickstart.main([])
-    assert "Plan only" in capsys.readouterr().out
-
-
-def test_hosted_quickstart_discovers_schema_and_does_not_run_implicitly():
-    client = Mock()
-    client.templates.list.return_value = [
-        {"templateId": "tmpl_sys_meta_page", "outputSchemaId": "schema_current"}
-    ]
-    client.datasets.create.return_value = {"datasetId": "dataset"}
-    client.jobs.create.return_value = {"jobId": "job"}
-    result = hosted_quickstart.provision(
-        client,
-        url="https://example.com/",
-        user_agent="ReviewedCrawler (+https://operator.example/contact)",
-    )
-    client.datasets.create.assert_called_once_with(
-        "quickstart pages", schema_id="schema_current"
-    )
-    client.jobs.run.assert_not_called()
-    assert result["execution"] is None
 
 
 def test_local_provisioning_is_repeatable_and_does_not_crawl(tmp_path, monkeypatch):
@@ -188,122 +175,6 @@ def test_local_provisioning_is_repeatable_and_does_not_crawl(tmp_path, monkeypat
         assert len(workspace.jobs.list()) == 1
 
 
-def test_hosted_provisioning_rejects_incompatible_job_without_archiving(monkeypatch):
-    from examples.shared import hosted
-
-    case = CASES["jobsearch"]
-    module = importlib.import_module(case.module)
-    client = Mock()
-    ids = {name: "field_" + name for name, _kind, _description in module.CUSTOM_FIELDS}
-    monkeypatch.setattr(hosted, "_field_ids", lambda *_args: ids)
-    fields = list(dict.fromkeys([*case.system_fields, *ids.values()]))
-    client.schemas.list.return_value = [
-        {"schemaId": "schema", "name": case.schema_name, "fieldIds": fields}
-    ]
-    client.datasets.list.return_value = [
-        {
-            "datasetId": "dataset",
-            "name": case.dataset_name,
-            "schemaId": "schema",
-            "mode": case.dataset_mode,
-        }
-    ]
-    client.templates.list.return_value = []
-    client.templates.create.side_effect = lambda name, **kw: {
-        "templateId": "template_" + name,
-        "name": name,
-        **kw,
-    }
-    client.jobs.list.return_value = [
-        {
-            "jobId": "existing",
-            "name": case.label,
-            "seeds": ["https://different.example/"],
-        }
-    ]
-    with pytest.raises(RuntimeError, match="differs from the recipe"):
-        HostedCaseProvisioner(client).provision(case)
-    client.jobs.archive.assert_not_called()
-    client.jobs.create.assert_not_called()
-    client.jobs.run.assert_not_called()
-
-
-def test_hosted_provisioning_reuses_resources_and_checks_template_changes(monkeypatch):
-    from examples.shared import hosted
-
-    case = CASES["jobsearch"]
-    module = importlib.import_module(case.module)
-    ids = {name: "field_" + name for name, _kind, _description in module.CUSTOM_FIELDS}
-    monkeypatch.setattr(hosted, "_field_ids", lambda *_args: ids)
-    client = Mock()
-    client.schemas.list.return_value = [
-        {
-            "schemaId": "schema",
-            "name": case.schema_name,
-            "fieldIds": list(dict.fromkeys([*case.system_fields, *ids.values()])),
-        }
-    ]
-    client.datasets.list.return_value = [
-        {
-            "datasetId": "dataset",
-            "name": case.dataset_name,
-            "schemaId": "schema",
-            "mode": case.dataset_mode,
-        }
-    ]
-    templates, jobs = [], []
-    client.templates.list.side_effect = lambda **_options: list(templates)
-    client.jobs.list.side_effect = lambda: list(jobs)
-
-    def create_template(name, *, output_schema_id, engine, mappings):
-        template = {
-            "templateId": f"template_{len(templates)}",
-            "name": name,
-            "outputSchemaId": output_schema_id,
-            "engine": engine,
-            "mappings": mappings,
-        }
-        templates.append(template)
-        return template
-
-    def create_job(name, **options):
-        job = {
-            "jobId": "job",
-            "name": name,
-            "seeds": options["seeds"],
-            "datasetId": options["dataset_id"],
-            "scope": options["scope"],
-            "politeness": options["politeness"],
-            "templateStack": [
-                {
-                    "templateId": entry["template_id"],
-                    "scope": {
-                        "hosts": entry["hosts"],
-                        "urlPatterns": entry["url_patterns"],
-                    },
-                }
-                for entry in options["template_stack"]
-            ],
-        }
-        jobs.append(job)
-        return job
-
-    client.templates.create.side_effect = create_template
-    client.jobs.create.side_effect = create_job
-    provisioner = HostedCaseProvisioner(client)
-    first = provisioner.provision(case, cron="7 * * * *")
-    count = len(templates)
-    assert provisioner.provision(case, cron="7 * * * *") == first
-    assert len(templates) == count
-    client.jobs.create.assert_called_once()
-    client.schemas.create.assert_not_called()
-    client.datasets.create.assert_not_called()
-    client.jobs.run.assert_not_called()
-    client.jobs.archive.assert_not_called()
-    client.schedules.set.assert_called_with("job", "7 * * * *", timezone="UTC")
-    templates[0]["engine"] = "meta" if templates[0]["engine"] != "meta" else "css"
-    with pytest.raises(RuntimeError, match="template .* differs from the recipe"):
-        provisioner.provision(case)
 
 
 def test_recipe_validator_checks_scope_and_rejects_literal_only_matches():

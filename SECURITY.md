@@ -6,8 +6,8 @@ development deployment.
 
 ## Supported versions
 
-Security fixes are currently made on the default branch. No tagged version is
-declared supported until the first public release is frozen.
+The initial alpha release is 0.1.0. Security fixes are currently made on the
+default branch; there is no long-term-support or backport guarantee.
 
 ## Reporting a vulnerability
 
@@ -20,10 +20,10 @@ or websites that you do not own or have permission to assess.
 
 ## Secret and incident handling
 
-- Never commit API keys, storage keys, Firebase service accounts, SAS tokens,
+- Never commit credentials, private keys, session tokens,
   signed institutional documents, private crawl bodies, or production logs.
 - Environment files may contain only non-secret identifiers. Runtime secrets
-  belong in the deployment platform's secret store or local process
+  belong in the operating-system credential store or local process
   environment.
 - If a secret is exposed, revoke or rotate it first; removing it from Git does
   not invalidate it.

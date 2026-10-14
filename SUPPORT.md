@@ -8,6 +8,5 @@ requests. Include the PulseCrawl version, Python version, operating system,
 deployment mode, a minimal reproduction, and redacted logs. Do not include API
 keys, private page bodies, signed URLs, personal data, or vulnerability details.
 
-Report vulnerabilities privately as described in `SECURITY.md`. Operational
-support for the hosted control plane is separate from support for the local
-open-source packages.
+Report vulnerabilities privately as described in `SECURITY.md`. Community
+support focuses on the local open-source package and its documented examples.

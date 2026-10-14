@@ -1,7 +1,7 @@
 [project]
 name = "pulsecrawl"
 dynamic = ["version"]
-description = "PulseCrawl crawler and SDK: run locally or submit hosted jobs through the PulseCrawl API."
+description = "Local Python crawler and extraction SDK with portable workspaces, Parquet datasets, SQL, and scheduling."
 readme = {file = "PYPI_README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
 license = "AGPL-3.0-only"

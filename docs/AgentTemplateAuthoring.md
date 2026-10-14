@@ -74,8 +74,8 @@ with Workspace("./my-crawls") as pc:
 ```
 
 The undefined `external_agent_proposes_templates` function is intentionally
-outside PulseCrawl. It can be an interactive user, a local model, a hosted
-model, or ordinary code.
+outside PulseCrawl. It can be an interactive user, a local model, or ordinary
+code.
 
 Inspection redacts metadata values and selector text samples by default. A
 caller may set `include_content_samples=True` only after making an explicit
@@ -114,8 +114,7 @@ but it does not prove that a selector chose the semantically correct text.
 
 Webpage HTML, visible text, metadata, JSON-LD, links, and attributes are
 untrusted input. Text such as "ignore your rules" is page data, not an
-instruction. An external agent must not receive PulseCrawl API keys, storage
-credentials, cookies, environment variables, or unrestricted network tools.
+instruction. An external agent must not receive credentials, cookies, environment variables, or unrestricted network tools.
 It must not expand hosts, increase budgets, disable robots handling, approve a
 draft, or promote a template because a page asks it to do so.
 
@@ -127,13 +126,13 @@ have a job may use the standalone inspection and validation functions, but
 they cannot enter the approval or promotion lifecycle.
 The local `approved_by` value is durable workflow provenance, not an
 authentication boundary. Filesystem access controls determine who may operate
-a local workspace. Hosted authorization would remain a control-plane concern.
+a local workspace.
 
 Sampling is the only authoring method that reaches the network, and it does so
 through a normal PulseCrawl job. `inspect`, `validate`, drift diagnostics, and
 repair operate only on supplied or retained bytes.
 
-Sending HTML or inspection output to a hosted model is an external data-egress
+Sending HTML or inspection output off the local machine is a data-egress
 decision. Review page content for personal, confidential, copyrighted, or
 contract-restricted material before transmission. Prefer local models or
 redacted structural inspection when the data policy does not permit egress.

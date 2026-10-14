@@ -1,14 +1,13 @@
 """Scoped extraction recipes for the Chihuahua newspaper case study.
 
-This module is intentionally side-effect free.  It describes templates that a
-hosted example can register, but it never creates resources or starts a crawl.
-The system Article templates are not listed here: the service applies compatible
-system templates automatically only after every applicable authored template
-misses.
+This module is intentionally side-effect free. It describes templates for a
+local workspace, but never creates resources or starts a crawl. Compatible
+fallback templates are supplied by the local provisioner and apply only after
+every applicable authored template misses.
 
 ``build_recipes`` takes the six custom field IDs created by the example and
 returns publication records.  Each template carries the final-URL scope to copy
-into ``jobs.create(..., template_stack=[...])`` after registering it.
+into the local job's ``templates`` list through the shared provisioner.
 """
 
 from __future__ import annotations
@@ -50,7 +49,7 @@ DISCOVERY_INCLUDE_PATTERNS = (
     r")(?:/|$)",
 )
 
-# One concrete article/indexed URL per publication. Hosted examples seed these
+# One concrete article/indexed URL per publication. Local examples seed these
 # before broader discovery so a prolific shared host (notably OEM) cannot fill
 # the global page budget before every publication gets a template evaluation.
 SAMPLE_URLS = {

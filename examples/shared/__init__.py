@@ -1,1 +1,1 @@
-"""Shared example configuration and local/hosted adapters."""
+"""Shared example configuration and local adapters."""

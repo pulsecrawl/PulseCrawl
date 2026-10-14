@@ -1,14 +1,11 @@
 """Mexico-wide news recipes for the URL-scoped template-stack example.
 
-This module is deliberately data-only.  It does not create hosted resources or
-start crawls, which makes the surveyed mappings usable by the eventual example
-without coupling the research to an API contract that is still being built.
+This module is deliberately data-only. It describes local extraction recipes
+without creating workspace resources or starting a crawl.
 
-``build_publishers`` turns symbolic custom-field names into real field IDs.
-``build_stack_entries`` then turns created template names into the proposed
-Python SDK ``template_stack`` payload.  System templates are intentionally not
-listed: the worker should append compatible system templates automatically
-after every authored stack entry has failed to produce values.
+``build_publishers`` turns symbolic custom-field names into local field IDs.
+Compatible fallback templates are supplied by the local provisioner and apply
+only after every applicable authored template misses.
 """
 
 from __future__ import annotations
@@ -433,24 +430,6 @@ def build_publishers(field_ids: Mapping[str, str]) -> list[dict[str, Any]]:
         publisher["templates"] = templates
         publishers.append(publisher)
     return publishers
-
-
-def build_stack_entries(
-    publishers: list[dict[str, Any]],
-    template_ids_by_name: Mapping[str, str],
-) -> list[dict[str, Any]]:
-    """Build the proposed ordered SDK stack from templates created by name."""
-    entries: list[dict[str, Any]] = []
-    for publisher in publishers:
-        for template in publisher["templates"]:
-            entries.append(
-                {
-                    "template_id": template_ids_by_name[template["name"]],
-                    "hosts": list(publisher["hosts"]),
-                    "url_patterns": list(publisher["url_patterns"]),
-                }
-            )
-    return entries
 
 
 def seeds() -> list[str]:
