@@ -1,8 +1,8 @@
 # Package architecture
 
 PulseCrawl ships one Python distribution and import namespace, `pulsecrawl`.
-Local crawling, portable workspaces, the CLI, and the hosted API client are
-different entry points, not separate copies of the engine. Python's inner
+Local crawling, portable workspaces, and the CLI are different entry points,
+not separate copies of the engine. This guide maps the local execution path. Python's inner
 `src/` directory is a packaging convention, not another service.
 
 ## Layers and dependency rules
@@ -17,16 +17,14 @@ pulsecrawl/
     executions/                Lifecycle and lifetime-budget policies
     datasets/                  Dataset URL identity
     scheduling/                Deterministic scheduled execution identity
-    synchronization/           Workspace comparison and profile values
     workspace/                 Definition normalization
   application/                 Use cases and their required interfaces
-    ports/                     Crawling, workspace and cloud Protocols
+    ports/                     Crawling and workspace Protocols
     crawling/                  Admission, dispatch, pages, records and robots
     templates/                 Resolution, validation and authoring
     datasets/                  Definitions and publication ordering
     executions/                Run, resume, cancellation and settlement
     scheduling/                Due dispatch and abandoned-run recovery
-    synchronization/           Profile and remote workspace operations
     workspace/                 Catalogs, jobs, validation and maintenance
   adapters/
     inbound/                   Python facade, CLI and scheduler process
@@ -40,7 +38,7 @@ Dependencies point inward: adapters depend on application ports and domain
 models; application depends only on domain and its own ports; domain depends
 only on the standard library. Only bootstrap selects and assembles concrete
 implementations. Domain and application must import without SQLite, HTTP,
-HTML parsers, DuckDB, PyArrow, croniter, keyring, or cloud dependencies.
+HTML parsers, DuckDB, PyArrow, croniter, or optional infrastructure dependencies.
 
 The top-level public API is lazy-loaded. Existing `pulsecrawl.core.*` and
 top-level module imports are compatibility bridges. They should not receive
@@ -74,9 +72,8 @@ metadata engines. `html/links.py` handles discovered links. These implement
 the parser and extractor ports; the crawl application does not import them.
 
 `bootstrap/crawling.py` supplies standard HTML strategies and a durable local
-runtime. `bootstrap/ephemeral.py` supplies the memory-backed runtime. Hosted
-workers can supply distributed frontier, ledger, gate and sink adapters to
-the same engine without depending on the local workspace implementation.
+runtime. `bootstrap/ephemeral.py` supplies the memory-backed runtime. Both
+use the same inward-facing ports for frontiers, ledgers, pacing, and output.
 
 ## Lifecycle, time and durability contracts
 
@@ -114,7 +111,7 @@ the same engine without depending on the local workspace implementation.
   setup failures. Caller-supplied fetchers remain caller-owned. Filesystem,
   DuckDB, credential and network security boundaries stay in their adapters.
 
-## Workspace, authoring and hosted boundaries
+## Workspace and authoring boundaries
 
 The `Workspace` facade is a small inbound API. Catalog, job, dataset,
 authoring, schedule and execution services own their use cases; bootstrap
@@ -129,16 +126,6 @@ Schedules separate due-claim persistence, cron calculation and process
 signals. The synchronous workspace scheduler invokes synchronous inbound
 job/execution facades; async callers use application services directly.
 
-`WorkspaceSyncPlanner` is pure comparison. `WorkspaceSyncService` uses a
-hosted gateway; HTTP resources implement that gateway. `ProfileService`
-separates non-secret metadata from credentials. Signed artifact downloads
-use a separate client and never inherit the hosted API key.
-
-Hosted-only authentication, organizations, billing, web UI, cloud dispatch
-and distributed persistence remain outside the public package. Keeping one
-distribution does not require putting those systems into it. Local and
-hosted lifecycles can differ while sharing crawl policies and ports.
-
 ## Extending and validating
 
 Add pure rules to domain, orchestration to application, and technology-specific
@@ -152,8 +139,7 @@ an internal boundary.
 From the package root, run `python -m pytest` for regression, boundary,
 service and adapter-contract tests. The existing coverage gate remains 90%.
 `tools/soak_workspace.py` exercises completeness, compaction and backup/restore
-at larger volumes. The private repository additionally tests its hosted
-worker against this same package; hosted services are not exported.
+at larger volumes.
 
 Public imports, CLI commands, workspace layout, SQLite schema and manifest
 formats remain compatible with the pre-refactor implementation. New code

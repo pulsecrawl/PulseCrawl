@@ -1,14 +1,11 @@
 """URL-scoped recipes for a multi-publisher stock-news crawl.
 
 The module is side-effect free: it defines the fields, seeds, scopes and
-templates an eventual hosted example can register.  Every authored template is
+templates a local workspace can register. Every authored template is
 scoped to the final host and an article-shaped path.  Compatible system
-templates are deliberately absent; the worker appends them only after all
-applicable authored templates miss.
-
-``build_publishers`` replaces symbolic custom-field names with actual field
-IDs. ``build_stack_entries`` converts registered template names into the
-Python SDK ``template_stack`` payload.
+templates are supplied by the local provisioner and apply only after all
+applicable authored templates miss. ``build_publishers`` replaces symbolic
+custom-field names with local field IDs.
 """
 
 from __future__ import annotations
@@ -407,24 +404,6 @@ def build_publishers(field_ids: Mapping[str, str]) -> list[dict[str, Any]]:
         publisher["templates"] = templates
         publishers.append(publisher)
     return publishers
-
-
-def build_stack_entries(
-    publishers: list[dict[str, Any]],
-    template_ids_by_name: Mapping[str, str],
-) -> list[dict[str, Any]]:
-    """Build ordered Python SDK stack entries from registered template names."""
-    entries: list[dict[str, Any]] = []
-    for publisher in publishers:
-        for template in publisher["templates"]:
-            entries.append(
-                {
-                    "template_id": template_ids_by_name[template["name"]],
-                    "hosts": list(publisher["hosts"]),
-                    "url_patterns": list(publisher["url_patterns"]),
-                }
-            )
-    return entries
 
 
 def seeds() -> list[str]:

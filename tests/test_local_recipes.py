@@ -1,4 +1,4 @@
-"""Contract checks for every organized multi-source hosted example."""
+"""Contract checks for every organized multi-source local example."""
 from __future__ import annotations
 
 import importlib
@@ -6,11 +6,12 @@ import sys
 from pathlib import Path
 
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
-sys.path.insert(0, str(EXAMPLES))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
-from hosted_cases import CASES, _field_ids, _normalise, _scope_matches  # noqa: E402
-from local_cases import provision_local_case  # noqa: E402
+from examples.shared.catalog import CASES
+from examples.shared.recipes import normalize
+from examples.shared.local import provision_local_case
 from pulsecrawl import Workspace
 
 
@@ -20,7 +21,7 @@ def _case_data(case):
         name: f"fld_test_{case.key.replace('/', '_')}_{name}"
         for name, _field_type, _description in module.CUSTOM_FIELDS
     }
-    return _normalise(case, field_ids)
+    return normalize(case, field_ids)
 
 
 def test_all_eight_cases_have_one_twenty_source_job_recipe():
@@ -93,7 +94,7 @@ def test_examples_cover_both_dataset_write_modes():
     assert CASES["marketplace/clothes"].dataset_mode == "append_all"
 
 
-def test_all_hosted_cases_use_depth_six_and_two_level_url_budgets():
+def test_all_local_cases_use_depth_six_and_two_level_url_budgets():
     ten_million_url_cases = {
         "jobsearch",
         "news/chihuahua",
@@ -106,49 +107,8 @@ def test_all_hosted_cases_use_depth_six_and_two_level_url_budgets():
             "maxUrlsTotal": 10_000_000 if key in ten_million_url_cases else 1_000_000,
             "maxDepth": 6,
         }
-        assert _scope_matches(
-            {
-                **case.scope,
-                "sameDomainOnly": True,
-                "includePatterns": [],
-                "excludePatterns": [],
-            },
-            case.scope,
-        )
 
 
-def test_custom_fields_reuse_compatible_selected_system_columns():
-    class Fields:
-        def __init__(self):
-            self.created = []
-
-        def list(self, *, origin):
-            if origin == "system":
-                return [
-                    {"fieldId": "fld_sys_url", "name": "url", "type": "url"},
-                    {"fieldId": "fld_sys_title", "name": "title", "type": "string"},
-                ]
-            return []
-
-        def create(self, name, field_type, *, description):
-            field = {"fieldId": f"fld_org_{name}", "name": name, "type": field_type}
-            self.created.append(field)
-            return field
-
-    class Client:
-        fields = Fields()
-
-    result = _field_ids(
-        Client(),
-        (("title", "string", "title"), ("url", "url", "url"), ("company", "string", "company")),
-        ("fld_sys_title", "fld_sys_url"),
-    )
-    assert result == {
-        "title": "fld_sys_title",
-        "url": "fld_sys_url",
-        "company": "fld_org_company",
-    }
-    assert [field["name"] for field in Client.fields.created] == ["company"]
 
 
 def test_all_cases_provision_into_one_valid_directory_workspace(tmp_path):
@@ -157,6 +117,7 @@ def test_all_cases_provision_into_one_valid_directory_workspace(tmp_path):
             result = provision_local_case(
                 workspace, case, cron="4 * * * *"
             )
+            assert provision_local_case(workspace, case, cron="4 * * * *") == result
             assert result["sourceCount"] == 20
             assert result["templateCount"] > 0
         assert workspace.validate()["valid"] is True

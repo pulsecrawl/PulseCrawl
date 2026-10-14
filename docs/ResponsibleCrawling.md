@@ -21,14 +21,14 @@ Do not disable those controls to bypass publisher policy or access controls.
 ## Network boundary
 
 The default HTTP adapter rejects loopback, private, link-local, multicast,
-reserved, documentation, and cloud-metadata address ranges after DNS
+reserved, documentation, and instance-metadata address ranges after DNS
 resolution. This applies to seeds, robots files, discovered links, and redirect
 destinations because they all use the same bounded adapter.
 
 Local callers may set `allow_private_networks=True` only for an explicitly
 trusted intranet or local test server. Never enable it for job definitions,
-URLs, or redirects supplied by an untrusted party. Hosted deployments should
-also enforce outbound firewall policy as defense in depth.
+URLs, or redirects supplied by an untrusted party. Enforce outbound firewall
+policy as defense in depth where possible.
 
 ## Live examples
 

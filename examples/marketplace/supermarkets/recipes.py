@@ -383,23 +383,6 @@ def build_retailers(field_ids: Mapping[str, str] | None = None) -> list[dict[str
     return retailers
 
 
-def build_stack_entries(
-    retailers: list[dict[str, Any]], template_ids_by_name: Mapping[str, str]
-) -> list[dict[str, Any]]:
-    """Build ordered entries for the proposed Python SDK ``template_stack``."""
-    entries: list[dict[str, Any]] = []
-    for retailer in retailers:
-        for template in retailer["templates"]:
-            entries.append(
-                {
-                    "template_id": template_ids_by_name[template["name"]],
-                    "hosts": list(retailer["hosts"]),
-                    "url_patterns": list(retailer["url_patterns"]),
-                }
-            )
-    return entries
-
-
 def seeds() -> list[str]:
     """Return all seeds, including sites deliberately left to system fallback."""
     return [spec["seed"] for spec in RETAILER_SPECS]

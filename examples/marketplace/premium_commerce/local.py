@@ -1,4 +1,7 @@
-"""Run with: python -m marketplace.premium_commerce.local --workspace ./commerce-demo"""
+"""Offline demo; run from the repository root:
+
+python -m examples.marketplace.premium_commerce.local --workspace ./commerce-demo
+"""
 
 from __future__ import annotations
 

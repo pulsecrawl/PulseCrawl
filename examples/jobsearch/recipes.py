@@ -1,6 +1,6 @@
 """Scoped extraction recipes for 20 technology-company career sites.
 
-The companies use three hosted applicant-tracking systems.  A recipe is kept
+The companies use three applicant-tracking systems. A recipe is kept
 per company even when the mappings are shared because the URL scope (and, for
 fallback mappings, the company literal) is company-specific.
 
@@ -174,7 +174,7 @@ SOURCES = (
         "https://job-boards.greenhouse.io/tubitv/jobs/8128273",
     ),
     # Stripe uses Greenhouse underneath, but renders a rich JobPosting on its
-    # own final host rather than the hosted Greenhouse DOM.
+    # own final host rather than the Greenhouse DOM.
     Source(
         "stripe",
         "Stripe",

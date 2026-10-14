@@ -2,10 +2,9 @@
 
 **[GitHub repository](https://github.com/pulsecrawl/PulseCrawl)**
 
-PulseCrawl is a safety-governed Python crawler and structured extraction SDK.
-One Python distribution supports in-memory crawling, durable local workspaces,
-and an optional client for operator-hosted services. Local use needs no account
-or cloud service. Requires Python 3.11 or newer.
+PulseCrawl is a local open-source Python crawler and structured extraction SDK.
+One Python distribution supports in-memory crawling and durable local workspaces.
+Run on your own machine with no account required. Requires Python 3.11 or newer.
 
 ## Installation
 
@@ -13,14 +12,13 @@ or cloud service. Requires Python 3.11 or newer.
 python -m pip install 'pulsecrawl[workspace]'
 ```
 
-No repository clone is needed. For crawling and the HTTP client only, use
+No repository clone is needed. For in-memory crawling only, use
 `python -m pip install pulsecrawl`. The `workspace` extra
 adds SQLite-backed execution state, Parquet datasets, embedded DuckDB queries,
 and cron scheduling. No Docker, Redis, or database server is required.
 
-Additional extras: `sql` for DuckDB-backed local results, `cloud` for optional
-credential storage and workspace synchronization, and `dev` for contributors.
-Hosted services are not included and have no default API endpoint.
+Additional extras: `sql` for DuckDB-backed local results and `dev` for
+contributors.
 
 ## Quickstart (no network)
 

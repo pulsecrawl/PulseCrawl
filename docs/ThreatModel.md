@@ -1,10 +1,8 @@
 # PulseCrawl threat model
 
-This document covers the open-source code in this repository: the crawl
-engine, local SDK and workspace, Parquet datasets, embedded DuckDB queries,
-template authoring, and the optional hosted API client. Hosted-service
-implementation details are outside this repository and are not security
-claims of the open-source project.
+This document covers the documented local workflows: the crawl engine,
+local SDK and workspace, Parquet datasets, embedded DuckDB queries, and
+template authoring.
 
 ## Assets and trust boundaries
 
@@ -15,7 +13,6 @@ claims of the open-source project.
 | Local workspace | SQLite state, definitions, retained pages, schedules | job definitions, downloaded content, interrupted processes | explicit workspace root, transactional state, atomic writes, runner leases, filesystem permissions |
 | Dataset and query | Parquet parts, manifests, query resources | records, schemas, SQL, corrupt or stale files | immutable versions, atomic manifest publication, dataset-scoped files, memory/thread/row limits |
 | Template authoring | drafts, validation evidence, promoted templates | webpage content and external-agent output | offline inspection, positive and negative validation, explicit approval, immutable promotion |
-| Hosted client | API credentials and downloaded artifacts | endpoints, API responses, signed download URLs | explicit HTTPS endpoint, OS credential storage, bounded retries, no API key on artifact hosts |
 
 ## Principal threats and mitigations
 
@@ -23,7 +20,7 @@ claims of the open-source project.
 
 URLs can target private services or redirect outside the intended scope. The
 default HTTP adapter rejects loopback, private, link-local, multicast,
-reserved, documentation, and cloud-metadata address ranges, including DNS
+reserved, documentation, and instance-metadata address ranges, including DNS
 answers in those ranges. Redirects return to the crawl engine so scope,
 robots, and pacing are checked again before another request.
 
@@ -68,7 +65,7 @@ isolation when SQL comes from an untrusted user.
 
 ### Data and credential disclosure
 
-Hosted artifact paths are validated before filesystem writes. Descendant
+Artifact paths are validated before filesystem writes. Descendant
 symlinks/reparse points are rejected, and parent directories remain pinned
 through staging and publication. Downloads publish with an atomic no-clobber
 rename unless the caller explicitly requests overwrite. Duplicate or ambiguous
@@ -78,12 +75,10 @@ isolate a workspace from a malicious user with equivalent filesystem access.
 
 Raw-page persistence is optional. Logs, bug reports, and shared workspaces
 must not include response bodies, authorization headers, API keys, cookies,
-signed URLs, or private records. Cloud profile JSON contains identifiers only;
-the optional hosted-client secret belongs in the operating-system credential
-store or an explicit CI environment variable.
-Profile metadata is written with mode `0600` on POSIX. On Windows it inherits
-the containing directory's ACL; `chmod` does not establish a private Windows
-ACL. Keep configuration in a user-controlled directory on either platform.
+signed URLs, or private records. Keep secrets in the operating-system
+credential store or explicit process environment, not in shared metadata.
+Restrict local directory permissions. On Windows, use directory ACLs rather
+than relying on POSIX mode bits to establish privacy.
 
 ### Agent-assisted template authoring
 

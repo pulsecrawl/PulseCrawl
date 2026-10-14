@@ -443,23 +443,6 @@ def build_sources(field_ids: Mapping[str, str] | None = None) -> list[dict[str, 
     return sources
 
 
-def build_stack_entries(
-    sources: list[dict[str, Any]], template_ids_by_name: Mapping[str, str]
-) -> list[dict[str, Any]]:
-    """Build ordered entries for the proposed SDK ``template_stack`` field."""
-    entries: list[dict[str, Any]] = []
-    for source in sources:
-        for template in source["templates"]:
-            entries.append(
-                {
-                    "template_id": template_ids_by_name[template["name"]],
-                    "hosts": list(source["hosts"]),
-                    "url_patterns": list(source["url_patterns"]),
-                }
-            )
-    return entries
-
-
 def seeds() -> list[str]:
     """Return every vertical seed, including automatic-system-fallback cases."""
     return [spec["seed"] for spec in SOURCE_SPECS]

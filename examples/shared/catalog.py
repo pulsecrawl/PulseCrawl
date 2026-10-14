@@ -1,4 +1,4 @@
-"""Pure recipe catalog shared by local and hosted example runners."""
+"""Pure recipe catalog for local example runners."""
 
 from dataclasses import dataclass
 from typing import Any, Mapping

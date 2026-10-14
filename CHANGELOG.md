@@ -33,9 +33,18 @@
   production approval. Account, publisher, and environment setup remain launch tasks.
 
 All notable changes to the public PulseCrawl package will be recorded here.
-PulseCrawl has not yet published a tagged software release.
+The initial public alpha release is 0.1.0.
 
 ## Unreleased
+
+### Documentation and examples
+
+- Focus the public guides and examples on local open-source use.
+- Add standalone consumers of the published package and retain the eight local
+  recipe categories, offline extraction, and controlled price-history demos.
+- Correct repository-root example commands and contributor test instructions.
+
+## 0.1.0
 
 ### Added
 
@@ -43,23 +52,20 @@ PulseCrawl has not yet published a tagged software release.
   provisioners, runnable per-category entry points, and offline workflow tests.
 - Recipe validation using saved HTML or explicitly opted-in governed sampling;
   no samples checked is inconclusive rather than a successful validation.
-- `pulsecrawl.core`, a cloud-independent crawl engine with bounded frontiers,
+- `pulsecrawl.core`, a portable crawl engine with bounded frontiers,
   robots handling, request pacing, redirect reauthorization, response-size
   limits, typed extraction, and explicit private-network opt-in.
 - Top-level `pulsecrawl` APIs for synchronous local crawling and portable workspaces with SQLite
   state, Parquet datasets, embedded DuckDB queries, schedules, compaction,
-  template authoring, and an optional explicitly configured hosted client.
-- Native and Docker-based local operation without a required cloud account,
-  control plane, Redis deployment, or external database server.
+  and template authoring.
+- Native and Docker-based local operation without a required account,
+  Redis deployment, or external database server.
 - An allowlisted public-source exporter, cross-platform Python CI, package
   build validation, dependency auditing, SBOM generation, secret scanning,
   and release automation.
 - GNU Affero General Public License v3.0 licensing, governance, DCO contribution terms, security
   reporting, community standards, support boundaries, and responsible-use
   guidance.
-- Optional OS-keyring cloud profiles and explicit workspace plan/push/run/pull
-  commands; no local command contacts cloud implicitly and signed artifact
-  downloads never receive the hosted API key.
 - A single `pulsecrawl` distribution containing both the engine and SDK,
   replacing the pre-release split-package layout.
 - Hexagonal internal layers (`domain`, `application`, `adapters`, `bootstrap`),
@@ -79,7 +85,5 @@ PulseCrawl has not yet published a tagged software release.
   addresses resolved directly or through DNS.
 - Redirect destinations are returned to the crawl engine for scope, robots,
   and origin-rate authorization before the next request.
-- Hosted SDK clients have no built-in service endpoint and require an explicit
-  `base_url` or `PULSECRAWL_BASE_URL`.
 - PulseCrawl is alpha software. Public compatibility begins with the first
   tagged release; no earlier commit is a supported release.
