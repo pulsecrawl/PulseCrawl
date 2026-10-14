@@ -4,7 +4,7 @@ title: "PulseCrawl: Design and Evaluation of a Framework for Policy-Constrained 
 type: software
 authors:
   - name: "PulseCrawl contributors"
-version: "0.1.0"
+version: "0.1.1"
 license: "AGPL-3.0-only"
 abstract: >-
   A framework for policy-constrained recurring web crawling, structured
