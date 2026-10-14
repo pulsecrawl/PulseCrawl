@@ -35,10 +35,12 @@
 All notable changes to the public PulseCrawl package will be recorded here.
 The initial public alpha release is 0.1.0.
 
-## Unreleased
+## 0.1.1
 
 ### Documentation and examples
 
+- Make the PyPI repository link explicitly GitHub and lead installation with
+  the published package rather than a source checkout.
 - Focus the public guides and examples on local open-source use.
 - Add standalone consumers of the published package and retain the eight local
   recipe categories, offline extraction, and controlled price-history demos.

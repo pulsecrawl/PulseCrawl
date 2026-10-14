@@ -1,9 +1,20 @@
 # PyPI release preparation
 
 This guide applies to the **public** `pulsecrawl/PulseCrawl` repository, whose
-root contains `pyproject.toml`. The current version is `0.1.0`, an unpublished
-alpha candidate. Preparation is not publication: no account, publisher,
-GitHub environment, tag, or upload is created by these local files.
+root contains `pyproject.toml`. Version `0.1.0` is the initial published alpha
+release. Version `0.1.1` updates the local-use description and examples without
+changing crawler behavior. Preparation is not
+publication: no account, publisher, GitHub environment, tag, or upload is
+created by these local files.
+
+The repository owner authorized a one-time manual production upload of `0.1.1`
+using the existing project API token, without TestPyPI rehearsal or a separate
+publishing-environment approval. This exception does not configure Trusted
+Publishing or attestations, does not weaken branch/tag protections, and does
+not authorize future uploads. Full CI on the exact release commit, clean-source
+builds, archive/privacy checks, and fresh-install verification remain required.
+Keep the token outside the public repository and never log it. The standard
+automated process below remains the intended path for subsequent releases.
 
 ## Account and ownership — manual setup required
 
@@ -122,14 +133,14 @@ it checks extraction, persistence, SQL, validation, and workspace reopening
 without crawling live websites. Its isolated mode prevents `PYTHONPATH` or the
 checkout from masking missing installed modules.
 
-## First release runbook
+## Standard release runbook
 
 1. Review, commit, and push the public source. Confirm full OSS CI on the exact
    commit; local testing is not evidence of the full platform matrix. Uploads
    fail closed until the latest exact-SHA CI run and all required jobs pass.
 2. Review the AGPL license, alpha support promises, version in
    `src/pulsecrawl/__init__.py`, `CITATION.cff`, and `CHANGELOG.md`. Create the
-   reviewed `v0.1.0` tag on that commit only after publication is authorized.
+   reviewed `vX.Y.Z` tag on that commit only after publication is authorized.
 3. Run **Prepare and publish OSS release** from `main` with target `build` and
    the release tag. Review its wheel, sdist, test results, and metadata.
 4. After publisher and environment setup, dispatch target `pypi` with the same
@@ -140,7 +151,7 @@ checkout from masking missing installed modules.
    approval. Approve production only when satisfied. The production job uploads
    the **same** archives, not a rebuild. No API token secret is required.
 6. Verify the production page, files, and attestations, then install
-   `pulsecrawl==0.1.0` and `pulsecrawl[workspace]==0.1.0` in fresh environments.
+   `pulsecrawl==X.Y.Z` and `pulsecrawl[workspace]==X.Y.Z` in fresh environments.
    Run smoke checks and `pip check`; record the released hashes and run URL.
 7. Publish reviewed release notes and update descriptions that still say the
    package is unpublished. Do not mark launch tasks complete before verification.
