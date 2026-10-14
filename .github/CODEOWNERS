@@ -1,1 +1,3 @@
-# No default code owner is currently assigned.
+# Route review requests for every path, including this file, to the project account.
+# Repository permissions, not CODEOWNERS, control who can push or merge changes.
+* @pulsecrawl
