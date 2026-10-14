@@ -11,7 +11,7 @@ continues to use deterministic CSS, JSON-LD, and metadata mappings.
    budgets.
 2. Call `workspace.authoring.sample(...)` with a smaller explicit page budget.
    This creates an ordinary execution intent and uses the same durable
-   frontier, robots service, organization-origin gate, redirect admission,
+   pending URLs, robots service, organization-origin gate, redirect admission,
    response limits, and lifetime budget as every other local crawl.
    Sampling retains pages but publishes no records or URL-ledger observations.
    Its real HTTP attempts still count against the source job's lifetime budget,

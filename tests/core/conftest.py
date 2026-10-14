@@ -6,7 +6,7 @@ import pytest
 
 from pulsecrawl.core.adapters.memory import (
     FakeClock,
-    MemoryFrontier,
+    MemoryPendingUrls,
     MemoryHostGate,
     MemoryPageSink,
     MemoryRecordSink,
@@ -75,7 +75,7 @@ def ports(clock, fetcher) -> EnginePorts:
         robots=RobotsService(fetcher, MemoryRobotsCache(), clock),
         visited=MemoryVisitedStore(),
         gate=MemoryHostGate(clock),
-        frontier=MemoryFrontier(),
+        pending_urls=MemoryPendingUrls(),
         pages=MemoryPageSink(),
         records=MemoryRecordSink(),
         clock=clock,

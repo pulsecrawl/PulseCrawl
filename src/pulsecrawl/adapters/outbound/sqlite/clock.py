@@ -1,7 +1,7 @@
 """Durable, single-machine adapters for an open-source PulseCrawl workspace.
 
 SQLite is authoritative for operational state.  Python dictionaries may cache
-reads, but a process restart must never lose a frontier item, URL admission,
+reads, but a process restart must never lose a pending URL, URL admission,
 schedule, rate-limit clock, or dataset identity observation.
 """
 

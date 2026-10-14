@@ -18,7 +18,7 @@ from pulsecrawl.application.time import readiness_time
 from pulsecrawl.domain.crawling.model import (
     CrawlStats,
     ExecutionIntent,
-    FrontierUrl,
+    PendingUrl,
 )
 from pulsecrawl.domain.crawling.urls import (
     origin_of,
@@ -32,18 +32,18 @@ class CrawlDispatch:
         self._p, self._admissions = ports, admissions
         self._inline_wait_s = inline_wait_s
 
-    async def _defer_to_frontier(
+    async def _defer_to_pending_urls(
         self,
-        item: FrontierUrl,
+        item: PendingUrl,
         ready_at: float,
         stats: CrawlStats,
     ) -> None:
         delay = max(ready_at - readiness_time(self._p.clock), 0.0)
         stats.rate_limit_queue_deferrals += 1
         stats.rate_limit_queue_wait_seconds += delay
-        await self._p.frontier.push(
+        await self._p.pending_urls.push(
             [
-                FrontierUrl(
+                PendingUrl(
                     url=item.url,
                     depth=item.depth,
                     not_before=ready_at,
@@ -108,7 +108,7 @@ class CrawlDispatch:
                 robots_delay or 0.0,
             )
             if schedule_wait > self._inline_wait_s:
-                await self._defer_to_frontier(
+                await self._defer_to_pending_urls(
                     scheduled,
                     readiness_time(self._p.clock) + schedule_wait,
                     stats,
@@ -133,7 +133,7 @@ class CrawlDispatch:
                 stats,
             )
             if dispatch_wait > self._inline_wait_s:
-                await self._defer_to_frontier(
+                await self._defer_to_pending_urls(
                     item,
                     readiness_time(self._p.clock) + dispatch_wait,
                     stats,

@@ -18,7 +18,7 @@ from pulsecrawl.application.time import readiness_time
 from pulsecrawl.domain.crawling.model import (
     CrawlStats,
     ExecutionIntent,
-    FrontierUrl,
+    PendingUrl,
     VisitedRow,
 )
 from pulsecrawl.domain.crawling.urls import (
@@ -28,7 +28,7 @@ from pulsecrawl.domain.crawling.urls import (
 )
 
 
-class FrontierAdmissions:
+class PendingUrlAdmissions:
     """Own one execution's unique URL admission budget and future rate slots."""
 
     def __init__(self, ports, *, remaining, inline_wait_s, visibility_resolution_s):
@@ -54,25 +54,25 @@ class FrontierAdmissions:
         return stats
 
     async def seed(self, intent: ExecutionIntent) -> int:
-        """Push the seeds onto the frontier. Call once per execution, not on resume."""
+        """Enqueue seed URLs. Call once per execution, not on resume."""
         items = []
         for seed in intent.seeds:
             normalized = normalize_url(seed)
             if normalized:
-                items.append(FrontierUrl(url=normalized, depth=0))
+                items.append(PendingUrl(url=normalized, depth=0))
         admitted = await self._admit(intent, items)
         if admitted:
             scheduled = await self._schedule_admitted(intent, admitted)
-            await self._p.frontier.push(scheduled)
+            await self._p.pending_urls.push(scheduled)
         return len(admitted)
 
     async def _allocate_slot(
         self,
         intent: ExecutionIntent,
-        item: FrontierUrl,
+        item: PendingUrl,
         scheduled_interval: float,
         robots_interval: float,
-    ) -> tuple[FrontierUrl, float]:
+    ) -> tuple[PendingUrl, float]:
         wait = await self._p.gate.schedule(
             intent.org_id,
             origin_of(item.url),
@@ -81,7 +81,7 @@ class FrontierAdmissions:
         )
         now_mono = readiness_time(self._p.clock)
         return (
-            FrontierUrl(
+            PendingUrl(
                 url=item.url,
                 depth=item.depth,
                 not_before=now_mono + wait,
@@ -104,14 +104,14 @@ class FrontierAdmissions:
     async def _schedule_admitted(
         self,
         intent: ExecutionIntent,
-        items: list[FrontierUrl],
+        items: list[PendingUrl],
         stats: CrawlStats | None = None,
-    ) -> list[FrontierUrl]:
+    ) -> list[PendingUrl]:
         interval = max(
             1.0 / intent.politeness.requests_per_second,
             1.0 / intent.politeness.organization_requests_per_second,
         )
-        scheduled: list[FrontierUrl] = []
+        scheduled: list[PendingUrl] = []
         for item in items:
             allocated, wait = await self._allocate_slot(intent, item, interval, 0.0)
             scheduled.append(allocated)
@@ -125,16 +125,16 @@ class FrontierAdmissions:
         return scheduled
 
     async def _admit(
-        self, intent: ExecutionIntent, items: list[FrontierUrl]
-    ) -> list[FrontierUrl]:
-        """Reserve unique frontier slots before enqueueing them.
+        self, intent: ExecutionIntent, items: list[PendingUrl]
+    ) -> list[PendingUrl]:
+        """Reserve unique Pending URLs slots before enqueueing them.
 
         The queued marker is durable in hosted mode, so resumes subtract both
         processed and pending URLs from the same execution budget.
         """
         if self._admission_remaining is None:
             self._admission_remaining = intent.scope.max_pages
-        admitted: list[FrontierUrl] = []
+        admitted: list[PendingUrl] = []
         rows: list[VisitedRow] = []
         for item in items:
             if self._admission_remaining <= 0:

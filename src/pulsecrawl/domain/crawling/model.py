@@ -290,7 +290,9 @@ class Record:
 
 
 @dataclass(frozen=True)
-class FrontierUrl:
+class PendingUrl:
+    """One admitted URL awaiting processing, including deferred or leased work."""
+
     url: str
     depth: int
     not_before: float = (
@@ -345,7 +347,7 @@ class Completed:
 
 @dataclass(frozen=True)
 class Parked:
-    """The frontier has pending work, but nothing is allowed before `resume_after_s`.
+    """Pending URLs exist, but nothing is allowed before `resume_after_s`.
 
     Hosted mode re-enqueues the execution message with this visibility delay
     and exits (scale-to-zero during politeness waits); local mode just sleeps.

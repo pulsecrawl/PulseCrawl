@@ -2,8 +2,13 @@
 
 This guide applies to the **public** `pulsecrawl/PulseCrawl` repository, whose
 root contains `pyproject.toml`. Version `0.1.0` is the initial published alpha
-release. Version `0.1.1` updates the local-use description and examples without
-changing crawler behavior. Preparation is not
+release. Published version `0.1.1` updates the local-use description and examples
+without changing crawler behavior. Version `0.2.0` standardizes Pending URLs
+terminology and upgrades workspace SQLite state to schema 5. Low-level adapter
+imports and engine dependency keywords change; top-level `crawl` and `Workspace`
+calls remain unchanged. Stop older package processes before upgrading a
+workspace, and retain the automatic pre-migration backup for downgrades.
+Preparation is not
 publication: no account, publisher, GitHub environment, tag, or upload is
 created by these local files.
 

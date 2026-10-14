@@ -7,11 +7,11 @@ import pytest
 
 from pulsecrawl.core.adapters.memory import (
     FakeClock,
-    MemoryFrontier,
+    MemoryPendingUrls,
     MemoryHostGate,
     MemoryVisitedStore,
 )
-from pulsecrawl.core.model import FrontierUrl, VisitedRow
+from pulsecrawl.core.model import PendingUrl, VisitedRow
 from pulsecrawl.core.politeness import guarded_interval_s
 
 
@@ -94,31 +94,31 @@ class TestHostGateContract:
             guarded_interval_s(0.5, -0.1)
 
 
-class TestFrontierContract:
+class TestPendingUrlsContract:
     async def test_orders_by_not_before_then_fifo(self):
-        frontier = MemoryFrontier()
-        await frontier.push(
+        pending_urls = MemoryPendingUrls()
+        await pending_urls.push(
             [
-                FrontierUrl(url="https://x/1", depth=0, not_before=100.0),
-                FrontierUrl(url="https://x/2", depth=0, not_before=50.0),
-                FrontierUrl(url="https://x/3", depth=0, not_before=50.0),
+                PendingUrl(url="https://x/1", depth=0, not_before=100.0),
+                PendingUrl(url="https://x/2", depth=0, not_before=50.0),
+                PendingUrl(url="https://x/3", depth=0, not_before=50.0),
             ]
         )
-        assert (await frontier.pop_ready(200.0)).url == "https://x/2"
-        assert (await frontier.pop_ready(200.0)).url == "https://x/3"
-        assert (await frontier.pop_ready(200.0)).url == "https://x/1"
+        assert (await pending_urls.pop_ready(200.0)).url == "https://x/2"
+        assert (await pending_urls.pop_ready(200.0)).url == "https://x/3"
+        assert (await pending_urls.pop_ready(200.0)).url == "https://x/1"
 
     async def test_never_returns_future_items(self):
-        frontier = MemoryFrontier()
-        await frontier.push([FrontierUrl(url="https://x/1", depth=0, not_before=100.0)])
-        assert await frontier.pop_ready(99.0) is None
-        assert await frontier.next_ready_at() == 100.0
-        assert (await frontier.pop_ready(100.0)).url == "https://x/1"
+        pending_urls = MemoryPendingUrls()
+        await pending_urls.push([PendingUrl(url="https://x/1", depth=0, not_before=100.0)])
+        assert await pending_urls.pop_ready(99.0) is None
+        assert await pending_urls.next_ready_at() == 100.0
+        assert (await pending_urls.pop_ready(100.0)).url == "https://x/1"
 
-    async def test_empty_frontier(self):
-        frontier = MemoryFrontier()
-        assert await frontier.pop_ready(0.0) is None
-        assert await frontier.next_ready_at() is None
+    async def test_empty_pending_urls(self):
+        pending_urls = MemoryPendingUrls()
+        assert await pending_urls.pop_ready(0.0) is None
+        assert await pending_urls.next_ready_at() is None
 
 
 class TestVisitedStoreContract:

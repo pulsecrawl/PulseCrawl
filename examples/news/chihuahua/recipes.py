@@ -34,7 +34,7 @@ SYSTEM_FIELD_IDS = (
 )
 
 # ``sameDomainOnly`` is host-based.  Because OEM hosts many publications on
-# one domain, keep its frontier inside the three selected publisher prefixes.
+# one domain, keep its pending URLs inside the three selected publisher prefixes.
 # The second expression admits all paths on the remaining newspaper hosts so
 # their home/section pages can still lead to the article URL patterns below.
 DISCOVERY_INCLUDE_PATTERNS = (

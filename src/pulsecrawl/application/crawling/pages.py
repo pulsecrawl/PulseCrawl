@@ -16,7 +16,7 @@ from pulsecrawl.application.time import readiness_time
 
 
 from pulsecrawl.domain.crawling.model import (
-    FrontierUrl,
+    PendingUrl,
     PageSnapshot,
     VisitedRow,
 )
@@ -34,7 +34,7 @@ from pulsecrawl.domain.crawling.retry import retry_after_seconds
 
 
 class CrawlPageProcessor:
-    """Process one frontier item without owning the queue's execution loop."""
+    """Process one pending URL without owning the queue's execution loop."""
 
     def __init__(self, ports, admissions, dispatch):
         self._p, self._admissions, self._dispatch = ports, admissions, dispatch
@@ -47,7 +47,7 @@ class CrawlPageProcessor:
         organization_interval = 1.0 / intent.politeness.organization_requests_per_second
         hashed = url_hash(item.url)
         if not await self._p.visited.admitted(intent.execution_id, hashed):
-            # Compatibility with frontiers created before admissions were
+            # Compatibility with pending URL queues created before admissions were
             # persisted. Claim a budget slot before processing the item.
             if not await self._admissions._admit(intent, [item]):
                 return
@@ -114,9 +114,9 @@ class CrawlPageProcessor:
                     item.retry_count,
                     self._p.clock.now(),
                 )
-                await self._p.frontier.push(
+                await self._p.pending_urls.push(
                     [
-                        FrontierUrl(
+                        PendingUrl(
                             url=item.url,
                             depth=item.depth,
                             not_before=readiness_time(self._p.clock) + delay,
@@ -155,10 +155,10 @@ class CrawlPageProcessor:
             ):
                 redirected = await self._admissions._admit(
                     intent,
-                    [FrontierUrl(url=target, depth=item.depth)],
+                    [PendingUrl(url=target, depth=item.depth)],
                 )
                 if redirected:
-                    await self._p.frontier.push(
+                    await self._p.pending_urls.push(
                         await self._admissions._schedule_admitted(
                             intent, redirected, stats
                         )
@@ -258,7 +258,7 @@ class CrawlPageProcessor:
     ) -> int:
         if item.depth >= intent.scope.max_depth or self._admissions.remaining == 0:
             return 0
-        fresh: list[FrontierUrl] = []
+        fresh: list[PendingUrl] = []
         for link in self._p.links.extract_links(body, source_url or item.url):
             if not in_scope(
                 link,
@@ -268,10 +268,10 @@ class CrawlPageProcessor:
                 exclude_patterns=intent.scope.exclude_patterns,
             ):
                 continue
-            fresh.append(FrontierUrl(url=link, depth=item.depth + 1))
+            fresh.append(PendingUrl(url=link, depth=item.depth + 1))
         admitted = await self._admissions._admit(intent, fresh)
         if admitted:
-            await self._p.frontier.push(
+            await self._p.pending_urls.push(
                 await self._admissions._schedule_admitted(intent, admitted, stats)
             )
         return len(admitted)

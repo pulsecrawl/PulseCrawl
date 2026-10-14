@@ -9,7 +9,7 @@ from pulsecrawl.adapters.outbound.memory.crawling import (
     MemoryRobotsCache,
     MemoryVisitedStore,
     MemoryHostGate,
-    MemoryFrontier,
+    MemoryPendingUrls,
     MemoryPageSink,
 )
 from pulsecrawl.adapters.outbound.memory.records import TeeRecordSink
@@ -34,7 +34,7 @@ async def run_ephemeral(
                 robots=RobotsService(robots, MemoryRobotsCache(), clock),
                 visited=MemoryVisitedStore(),
                 gate=MemoryHostGate(clock),
-                frontier=MemoryFrontier(),
+                pending_urls=MemoryPendingUrls(),
                 pages=page_sink if page_sink is not None else MemoryPageSink(),
                 records=TeeRecordSink(sink, record_sink, collect_records),
                 clock=clock,

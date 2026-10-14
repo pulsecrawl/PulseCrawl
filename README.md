@@ -92,7 +92,7 @@ This native directory workflow is the default open-source deployment. Docker
 is optional; users do not need Docker, Redis, an account, or a background
 database service. If the native scheduler is interrupted, its SQLite runner
 lease expires (or is released on graceful shutdown) and startup resumes the
-durable execution frontier without creating another execution intent.
+execution's durable Pending URLs queue without creating another execution intent.
 
 The following creates a job and enables an hourly schedule; it does not start
 the scheduler. Replace the contact placeholder before starting scheduled crawls.
@@ -127,7 +127,7 @@ with Workspace.init("./my-crawls") as pc:
 
 The workspace is one copyable directory. JSON definitions and Parquet
 outputs are human-owned; `state/pulsecrawl.sqlite` supplies transactional
-frontiers, URL history, schedules, budgets, robots caching, and shared
+pending URL queues, URL history, schedules, budgets, robots caching, and shared
 workspace/site rate limits. Python memory is used only as an L1 cache. Redis
 is not required and SQLite remains authoritative after restarts.
 

@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from typing import Sequence
 
 from pulsecrawl.domain.crawling.model import (
-    FrontierUrl,
+    PendingUrl,
     PageSnapshot,
     Record,
     RobotsCacheEntry,
@@ -178,19 +178,19 @@ class MemoryHostGate:
         return 0.0
 
 
-class MemoryFrontier:
+class MemoryPendingUrls:
     """Min-heap on (not_before, insertion order)."""
 
     def __init__(self) -> None:
-        self._heap: list[tuple[float, int, FrontierUrl]] = []
+        self._heap: list[tuple[float, int, PendingUrl]] = []
         self._counter = 0
 
-    async def push(self, items: Sequence[FrontierUrl]) -> None:
+    async def push(self, items: Sequence[PendingUrl]) -> None:
         for item in items:
             heapq.heappush(self._heap, (item.not_before, self._counter, item))
             self._counter += 1
 
-    async def pop_ready(self, now: float) -> FrontierUrl | None:
+    async def pop_ready(self, now: float) -> PendingUrl | None:
         if self._heap and self._heap[0][0] <= now:
             return heapq.heappop(self._heap)[2]
         return None

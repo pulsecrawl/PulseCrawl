@@ -1,7 +1,7 @@
 """Durable, single-machine adapters for an open-source PulseCrawl workspace.
 
 SQLite is authoritative for operational state.  Python dictionaries may cache
-reads, but a process restart must never lose a frontier item, URL admission,
+reads, but a process restart must never lose a pending URL, URL admission,
 schedule, rate-limit clock, or dataset identity observation.
 """
 
@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Iterator, Sequence
 
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 class _SynchronizedCursor(sqlite3.Cursor):
@@ -209,7 +209,7 @@ class SQLiteState:
                   updated_at REAL NOT NULL,
                   PRIMARY KEY(execution_id, url_hash)
                 );
-                CREATE TABLE IF NOT EXISTS frontier (
+                CREATE TABLE IF NOT EXISTS pending_urls (
                   sequence INTEGER PRIMARY KEY AUTOINCREMENT,
                   execution_id TEXT NOT NULL REFERENCES executions(execution_id) ON DELETE CASCADE,
                   url_hash TEXT NOT NULL,
@@ -223,8 +223,8 @@ class SQLiteState:
                   lease_until REAL,
                   UNIQUE(execution_id, url_hash)
                 );
-                CREATE INDEX IF NOT EXISTS frontier_ready
-                  ON frontier(execution_id, state, not_before, sequence);
+                CREATE INDEX IF NOT EXISTS pending_urls_ready
+                  ON pending_urls(execution_id, state, not_before, sequence);
                 CREATE TABLE IF NOT EXISTS robots_cache (
                   origin TEXT PRIMARY KEY,
                   text TEXT NOT NULL,
@@ -355,11 +355,36 @@ class SQLiteState:
         db.execute("INSERT OR IGNORE INTO scheduler_state(singleton) VALUES(1)")
 
     def _migrate_v2_to_v3(self, db: sqlite3.Connection) -> None:
-        if not self._has_column(db, "frontier", "retry_count"):
+        if not self._has_column(db, "pending_urls", "retry_count"):
             db.execute(
-                "ALTER TABLE frontier ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0"
+                "ALTER TABLE pending_urls ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0"
             )
 
     def _migrate_v3_to_v4(self, db: sqlite3.Connection) -> None:
         if not self._has_column(db, "scheduler_state", "lease_until"):
             db.execute("ALTER TABLE scheduler_state ADD COLUMN lease_until REAL")
+
+    def _migrate_v4_to_v5(self, db: sqlite3.Connection) -> None:
+        """Rename the legacy URL queue without losing work or FIFO sequence IDs.
+
+        The base schema creates an empty new-name table before migrations run.
+        Only that empty placeholder may be replaced; conflicting populated
+        tables abort the migration and leave the legacy queue intact.
+        """
+        legacy = db.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='frontier'"
+        ).fetchone()
+        if legacy is not None:
+            if db.execute("SELECT 1 FROM pending_urls LIMIT 1").fetchone():
+                raise RuntimeError("cannot migrate conflicting pending URL queues")
+            db.execute("DROP TABLE pending_urls")
+            db.execute("ALTER TABLE frontier RENAME TO pending_urls")
+            db.execute("DROP INDEX IF EXISTS frontier_ready")
+        if not self._has_column(db, "pending_urls", "retry_count"):
+            db.execute(
+                "ALTER TABLE pending_urls ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0"
+            )
+        db.execute(
+            "CREATE INDEX IF NOT EXISTS pending_urls_ready "
+            "ON pending_urls(execution_id, state, not_before, sequence)"
+        )
