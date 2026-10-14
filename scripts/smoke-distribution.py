@@ -2,8 +2,12 @@
 """Run against a clean, non-editable install. Fictional input; no HTTP traffic."""
 
 import argparse
+import json
 from datetime import datetime, timezone
 from pathlib import Path
+import shutil
+import subprocess
+import sys
 import tempfile
 
 from pulsecrawl import PulseCrawl, Workspace, __version__, crawl
@@ -33,10 +37,35 @@ class FixtureFetcher:
         )
 
 
+def check_standalone_examples(*, workspace):
+    """Copy consumer files away from the checkout and run with isolated imports."""
+    source = Path(__file__).resolve().parents[1] / "examples/installed_package"
+    with tempfile.TemporaryDirectory(prefix="pulsecrawl-installed-examples-") as temporary:
+        root = Path(temporary)
+        crawler = root / "crawl_page.py"
+        shutil.copy2(source / crawler.name, crawler)
+        result = subprocess.run(
+            [sys.executable, "-I", str(crawler)],
+            cwd=root, capture_output=True, text=True, timeout=30,
+        )
+        assert result.returncode == 0 and "--live" in result.stdout, result.stderr
+        if workspace:
+            setup = root / "workspace_setup.py"
+            shutil.copy2(source / setup.name, setup)
+            result = subprocess.run(
+                [sys.executable, "-I", str(setup), "--workspace", str(root / "data")],
+                cwd=root, capture_output=True, text=True, timeout=30,
+            )
+            assert result.returncode == 0, result.stderr
+            assert json.loads(result.stdout)["valid"] is True
+            assert json.loads(result.stdout)["datasetId"]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workspace", action="store_true")
     args = parser.parse_args()
+    check_standalone_examples(workspace=args.workspace)
     result = crawl(
         seeds=[URL],
         engine="meta",

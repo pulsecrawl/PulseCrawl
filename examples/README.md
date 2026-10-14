@@ -4,16 +4,58 @@ The examples use the single `pulsecrawl` package. Start with an offline example;
 live website selectors and access policies are not validated by the offline tests.
 Nothing creates resources, starts a crawl, or opens a socket merely on import.
 
-Run the commands below from the **package root** (the directory containing
-`pyproject.toml` and `examples/`). In the private monorepo this is
-`.`; in the public repository it is the repository root.
+## Standalone package examples (no clone)
+
+Install the public package with Python 3.11 or newer:
 
 ```bash
-python -m pip install -e '.[workspace]'
+python -m pip install 'pulsecrawl[workspace]'
+```
+
+Save either linked Python file on its own in any directory. Both import only
+the installed top-level `pulsecrawl` API and Python's standard library; neither
+requires a source checkout, `PYTHONPATH`, or the rest of `examples/`.
+
+- [workspace_setup.py](installed_package/workspace_setup.py): creates a fresh
+  local workspace and dataset, validates it, and exits without HTTP traffic.
+- [crawl_page.py](installed_package/crawl_page.py): a bounded live crawl;
+  requires `--live`, an authorized URL, and an operator-contact user agent.
+  With no arguments it only prints help. The base `pulsecrawl` install is sufficient.
+
+```bash
+python workspace_setup.py --workspace ./package-demo
+python crawl_page.py --help
+```
+
+After reviewing site authorization and replacing the contact placeholder,
+the following command opts in to network requests, including robots checks:
+
+```bash
+python crawl_page.py --live --url https://example.com/ \
+  --user-agent 'YourCrawler/1.0 (+https://your-domain.example/contact)'
+```
+
+`pip install pulsecrawl` installs the library and CLI, not an `examples` module.
+The standalone files can be copied independently; the module commands below
+need the repository's examples tree. Published versions are immutable, so
+examples for a newer API must be used with a matching released package.
+
+## Repository demos (offline first)
+
+Download or clone the [public repository](https://github.com/pulsecrawl/PulseCrawl)
+for its shared fixtures and recipe libraries. From its root:
+
+```bash
+python -m pip install 'pulsecrawl[workspace]'
 python -m examples.local_quickstart
 python -m examples.workspace_quickstart --workspace ./quickstart-workspace
 python -m examples.hosted_quickstart
 ```
+
+These commands use the installed package, not `src/`. The direct-script
+compatibility bootstraps locate only the examples tree; they do not add `src/`
+or replace the installed library. For developing unreleased code instead,
+use the editable setup in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 | Example | Default behavior |
 | --- | --- |
@@ -142,8 +184,16 @@ URLs can expire, and skip counts never establish current selector accuracy.
 
 ## Controlled commerce and verification
 
+The controlled commerce demo runs against the published `workspace` extra:
+
 ```bash
 python -m examples.marketplace.premium_commerce.local --workspace ./commerce-demo --summary
+```
+
+For contributor tests, first install the development dependencies as described
+in [CONTRIBUTING.md](../CONTRIBUTING.md), then run:
+
+```bash
 python -m pytest tests/test_example_workflows.py tests/test_hosted_examples.py \
   tests/test_premium_commerce_example.py tests/test_live_commerce_example.py --no-cov
 ```

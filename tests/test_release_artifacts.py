@@ -59,6 +59,8 @@ def candidate(tmp_path):
         "tests/test_example_workflows.py",
         "examples/local_quickstart.py",
         "examples/workspace_quickstart.py",
+        "examples/installed_package/crawl_page.py",
+        "examples/installed_package/workspace_setup.py",
         "examples/shared/fixtures.py",
         "tools/soak_workspace.py",
     ):

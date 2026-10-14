@@ -1,7 +1,7 @@
 """Offline SQLite/Parquet/SQL demonstration using the public Workspace API.
 
 python -m examples.workspace_quickstart --workspace ./quickstart-workspace
-Install the workspace extra first: pip install -e '.[workspace]'.
+Install the published workspace extra first: pip install 'pulsecrawl[workspace]'.
 """
 
 import argparse

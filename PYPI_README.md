@@ -10,19 +10,45 @@ or cloud service. Requires Python 3.11 or newer.
 ## Installation
 
 ```bash
-python -m pip install pulsecrawl
 python -m pip install 'pulsecrawl[workspace]'
-pulsecrawl init ./my-crawls
-pulsecrawl --workspace ./my-crawls validate
 ```
 
-The base install provides crawling and the HTTP client. The `workspace` extra
+No repository clone is needed. For crawling and the HTTP client only, use
+`python -m pip install pulsecrawl`. The `workspace` extra
 adds SQLite-backed execution state, Parquet datasets, embedded DuckDB queries,
 and cron scheduling. No Docker, Redis, or database server is required.
 
 Additional extras: `sql` for DuckDB-backed local results, `cloud` for optional
 credential storage and workspace synchronization, and `dev` for contributors.
 Hosted services are not included and have no default API endpoint.
+
+## Quickstart (no network)
+
+After installing the workspace extra, save this as `quickstart.py` and run
+`python quickstart.py` from any directory. Choose a new workspace path:
+
+```python
+from pulsecrawl import Workspace
+
+with Workspace.init("./my-crawls") as pc:
+    dataset = pc.datasets.create(
+        "pages",
+        fields=[{"fieldId": "title", "name": "title", "type": "string"}],
+    )
+    print(dataset["datasetId"])
+    print(pc.validate()["valid"])
+```
+
+This creates local definitions only; it does not start a crawl. The installed
+CLI can also initialize and validate a fresh workspace:
+
+```bash
+pulsecrawl init ./cli-crawls
+pulsecrawl --workspace ./cli-crawls validate
+```
+
+See the [standalone package examples](https://github.com/pulsecrawl/PulseCrawl/tree/main/examples/installed_package)
+for independently runnable workspace setup and explicitly opted-in live crawling.
 
 ## Features and boundaries
 

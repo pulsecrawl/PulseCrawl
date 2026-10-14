@@ -1,64 +1,65 @@
-# pulsecrawl
+# PulseCrawl
 
-The PulseCrawl SDK. Two modes, one engine:
+A safety-governed Python crawler and structured extraction SDK. Crawl in memory,
+keep durable local workspaces, or connect explicitly to an operator-hosted service.
+Local use is free and needs no account, Docker, Redis, or database server.
+Requires **Python 3.11 or newer**. PulseCrawl is alpha software; see the
+[support policy](SUPPORT.md) before relying on API or workspace compatibility.
 
-This repository publishes one Python distribution and one import namespace.
-The reusable crawler lives in `src/pulsecrawl/application/crawling`.
-`domain` contains pure policies, `application` orchestrates use cases through
-ports, `adapters` implements Python/CLI, HTTP, SQLite and file integrations,
-and `bootstrap` wires those components together. The old `core` and top-level
-module paths remain compatibility imports, not duplicate implementations.
-The inner `src/` directory is the standard Python packaging layout, not a
-second package or deployable service.
+## Installation
 
-See the [package architecture](docs/PackageArchitecture.md) for the
-dependency rules, crawl pipeline, durability contracts, and extension points.
+Install the published package from [PyPI](https://pypi.org/project/pulsecrawl/).
+No repository clone is needed. For durable workspaces, Parquet, SQL, and schedules:
 
-## Architecture at a glance
-
-PulseCrawl uses hexagonal architecture inside a single package:
-
-```text
-src/pulsecrawl/
-├── domain/                Models, invariants, and pure policies
-├── application/           Use cases and ports (interfaces)
-├── adapters/
-│   ├── inbound/           Python API, CLI, and scheduler process
-│   └── outbound/          HTTP, HTML, SQLite, files, Parquet, and DuckDB
-├── bootstrap/             Dependency wiring and resource ownership
-└── core/                  Legacy compatibility imports
+```bash
+python -m pip install 'pulsecrawl[workspace]'
 ```
 
-Dependencies point inward: domain has no infrastructure dependencies, and
-application coordinates work through ports rather than accessing databases,
-files, or HTTP clients directly. Focused classes own orchestration and
-lifecycle; stateless policies remain functions where that is simpler.
+For in-memory crawling and the HTTP client only, use `python -m pip install pulsecrawl`.
+Optional extras are `sql` for querying in-memory results, `workspace` for the
+complete local runtime, and `cloud` for credential storage and workspace sync.
+Check the installed version with `python -m pip show pulsecrawl`.
+Source-checkout and editable installation instructions are in
+[CONTRIBUTING.md](CONTRIBUTING.md), not required for ordinary package use.
 
-The [crawl engine](src/pulsecrawl/application/crawling/engine.py) coordinates
-URL admission, dispatch, page processing, and record extraction. Actual
-requests run through the [HTTP fetcher](src/pulsecrawl/adapters/outbound/http/fetcher.py),
-and scraping strategies live in [HTML extraction](src/pulsecrawl/adapters/outbound/html/extraction/).
-Local and hosted callers supply different adapters to the same engine;
-hosted authentication, billing, web UI, and cloud dispatch remain outside
-the public package. Existing public imports and workspace formats are preserved.
+## Quickstart: create a local workspace
 
-Regression, architecture-boundary, and adapter-contract tests run with
-`python -m pytest` from the package root, with a 90% coverage gate.
-The [workspace soak tool](tools/soak_workspace.py) also checks record
-completeness, compaction, and backup/restore. See the
-[architecture guide](docs/PackageArchitecture.md) for the full component map
-and durability contracts.
+After installing `pulsecrawl[workspace]`, save this as `quickstart.py` in any
+directory and run `python quickstart.py`. Choose a new workspace directory.
+This example creates local definitions only; it does not crawl or contact a service.
+
+```python
+from pulsecrawl import Workspace
+
+with Workspace.init("./my-crawls") as pc:
+    dataset = pc.datasets.create(
+        "pages",
+        fields=[{"fieldId": "title", "name": "title", "type": "string"}],
+    )
+    print(dataset["datasetId"])
+    print(pc.validate()["valid"])
+```
+
+You can also initialize and validate a fresh workspace with the installed CLI:
+
+```bash
+pulsecrawl init ./cli-crawls
+pulsecrawl --workspace ./cli-crawls validate
+```
+
+The [standalone package examples](examples/README.md#standalone-package-examples-no-clone)
+can each be saved on their own and run against the PyPI package. The larger
+offline recipe demos are separate repository examples, not installed modules.
 
 ## Local and hosted usage
-
-The first PyPI release is being prepared; the commands below install from
-source. Release maintainers should follow the [PyPI publishing guide](docs/PyPI.md).
-The package-index description is maintained separately in [PYPI_README.md](PYPI_README.md)
-so its links work outside GitHub.
 
 **Local: free, no account.** Crawl in memory with the exact engine the hosted
 product runs, or use a portable workspace for durable SQLite state, Parquet
 dataset versions, embedded DuckDB queries, and hourly schedules:
+
+The following example makes live HTTP requests (including robots checks).
+Before running it, review the target's access policy and replace the contact
+placeholder with your own working operator contact. It needs only the base package.
 
 ```python
 from pulsecrawl import crawl
@@ -68,19 +69,18 @@ result = crawl(
     engine="meta",
     mappings={"fld_title": ["og:title", "<title>"]},
     fields=[{"fieldId": "fld_title", "name": "title", "type": "string"}],
-    dataset="./my-data/pages",  # optional folder: runs accumulate in the
-)                               # same executions/ layout the cloud uses
+    scope={"maxUrlsPerExecution": 1, "maxDepth": 0},
+    politeness={
+        "respectRobotsTxt": True,
+        "requestsPerSecond": 1.0,
+        "userAgent": "YourCrawler/1.0 (+https://your-domain.example/contact)",
+    },
+)
 print(result.records)
 ```
 
-Install the complete local runtime from the package directory (DuckDB and
-PyArrow are Python packages; there is no database server to operate):
-
-```bash
-python -m pip install -e .
-python -m pip install -e '.[workspace]'
-pulsecrawl init ./my-crawls
-```
+The `workspace` extra adds DuckDB and PyArrow as Python dependencies; there is
+no database server to operate. Use the `Workspace` API below for durable storage.
 
 Network requests reject loopback, private, link-local, reserved, and cloud
 metadata address ranges by default. For an explicitly trusted intranet or
@@ -242,7 +242,7 @@ store. CI may provide `PULSECRAWL_API_KEY` instead; when that variable is set,
 or modify a keyring backend.
 
 ```bash
-python -m pip install -e '.[workspace,cloud]'
+python -m pip install 'pulsecrawl[workspace,cloud]'
 pulsecrawl cloud connect --profile production --base-url https://api.example/v1
 pulsecrawl cloud whoami --profile production
 
@@ -323,7 +323,8 @@ authored stack misses, the service tries compatible system templates and marks
 that host as `needsTemplate` in the execution's `templateCoverage` report.
 
 Runnable examples and recipe libraries live in [examples/](examples/).
-Start without network access with `python -m examples.local_quickstart` or
+After downloading the repository examples and installing the published package,
+start without network access with `python -m examples.local_quickstart` or
 `python -m examples.workspace_quickstart --workspace ./quickstart-workspace`.
 The hosted quickstart prints a plan unless `--apply` is supplied. See the
 [example guide](examples/README.md) for shared structure, live opt-in flags,
@@ -336,6 +337,47 @@ drafts, positive and negative validation, contamination and provenance
 diagnostics, explicit approval, immutable promotion, and drift repair. See
 [Agent-assisted template authoring](docs/AgentTemplateAuthoring.md)
 and [the generic example](examples/agent_template_authoring.py).
+
+## Architecture and contributing
+
+This repository publishes one Python distribution and one import namespace.
+The inner `src/` directory is the standard Python packaging layout, not a
+second package or deployable service. PulseCrawl uses hexagonal architecture:
+
+```text
+src/pulsecrawl/
+├── domain/                Models, invariants, and pure policies
+├── application/           Use cases and ports (interfaces)
+├── adapters/
+│   ├── inbound/           Python API, CLI, and scheduler process
+│   └── outbound/          HTTP, HTML, SQLite, files, Parquet, and DuckDB
+├── bootstrap/             Dependency wiring and resource ownership
+└── core/                  Legacy compatibility imports
+```
+
+Dependencies point inward: domain has no infrastructure dependencies, and
+application coordinates work through ports rather than accessing databases,
+files, or HTTP clients directly. Focused classes own orchestration and
+lifecycle; stateless policies remain functions where that is simpler.
+The old `core` and top-level module paths are compatibility imports, not
+duplicate implementations.
+
+The [crawl engine](src/pulsecrawl/application/crawling/engine.py) coordinates
+URL admission, dispatch, page processing, and record extraction. Requests run
+through the [HTTP fetcher](src/pulsecrawl/adapters/outbound/http/fetcher.py), and
+scraping strategies live in [HTML extraction](src/pulsecrawl/adapters/outbound/html/extraction/).
+Local and hosted callers supply different adapters to the same engine;
+hosted authentication, billing, web UI, and cloud dispatch remain outside
+the public package. Existing public imports and workspace formats are preserved.
+
+See the [architecture guide](docs/PackageArchitecture.md) for the component map,
+dependency rules, durability contracts, and extension points. Follow
+[CONTRIBUTING.md](CONTRIBUTING.md) for editable installs and tests; the suite
+enforces a 90% coverage gate. The [workspace soak tool](tools/soak_workspace.py)
+also checks completeness, compaction, and backup/restore.
+Release maintainers should follow the [PyPI publishing guide](docs/PyPI.md).
+The index description is maintained in [PYPI_README.md](PYPI_README.md);
+changes there appear on PyPI only when a new version is published.
 
 ## License
 
