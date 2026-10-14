@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tarfile
+import tomllib
 import zipfile
 
 import pytest
@@ -20,6 +21,19 @@ SPEC = importlib.util.spec_from_file_location(
 )
 CHECKER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(CHECKER)
+
+
+def test_pypi_metadata_labels_the_repository_explicitly_as_github():
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+    assert project["urls"]["GitHub"] == "https://github.com/pulsecrawl/PulseCrawl"
+    assert "Source" not in project["urls"]
+
+
+def test_pypi_description_promotes_github_before_installation():
+    description = (ROOT / "PYPI_README.md").read_text()
+    introduction = description.split("## Installation", 1)[0]
+    assert "[GitHub repository](https://github.com/pulsecrawl/PulseCrawl)" in introduction
+    assert "After a release is published to PyPI" not in description
 
 
 @pytest.fixture
