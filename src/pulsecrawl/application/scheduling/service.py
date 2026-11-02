@@ -107,7 +107,12 @@ class ScheduleService:
                     schedule["job_id"], _execution_id(schedule["job_id"], scheduled_for)
                 )
                 deadline = scheduled_time + timedelta(seconds=execution_window)
-                missed_current = active or deadline <= now
+                # A preceding due job may have occupied this synchronous local
+                # scheduler for part of the occurrence window. Re-read the
+                # clock so a now-expired occurrence is recorded as missed
+                # instead of starting an execution with no remaining time.
+                current_time = self._clock.now()
+                missed_current = active or deadline <= current_time
                 if not missed_current:
                     results.append(
                         self._jobs.run(
