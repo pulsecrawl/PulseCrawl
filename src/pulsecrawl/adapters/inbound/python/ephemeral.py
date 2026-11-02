@@ -93,6 +93,10 @@ async def crawl(
                     else None
                 ),
                 origin=t.get("origin", "org"),
+                page_role=t.get("pageRole", t.get("page_role", "record")),
+                required_fields=tuple(
+                    t.get("requiredFields") or t.get("required_fields") or ()
+                ),
             )
             for i, t in enumerate(templates)
         ),
@@ -109,6 +113,10 @@ async def crawl(
                 engine=t["engine"],  # type: ignore[typeddict-item]
                 mappings=TemplateSpec.normalize_mappings(t["mappings"]),
                 origin="system",
+                page_role=t.get("pageRole", t.get("page_role", "record")),
+                required_fields=tuple(
+                    t.get("requiredFields") or t.get("required_fields") or ()
+                ),
             )
             for i, t in enumerate(system_templates or ())
         ),

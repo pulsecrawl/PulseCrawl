@@ -11,6 +11,7 @@ FieldType = Literal["string", "number", "boolean", "datetime", "url"]
 EngineName = Literal["css", "jsonld", "meta"]
 TemplateOrigin = Literal["org", "system"]
 MatchTier = Literal["scoped", "stack_fallback", "system_fallback"]
+PageRole = Literal["record", "navigation", "ignore"]
 
 DEFAULT_USER_AGENT = "PulseCrawlBot/0.1 (+https://github.com/pulsecrawl/PulseCrawl)"
 
@@ -91,6 +92,13 @@ class TemplateSpec:
     mappings: Mapping[str, tuple[str, ...]]
     scope: TemplateScope | None = None
     origin: TemplateOrigin = "org"
+    # Record templates publish rows. Navigation and ignore templates may
+    # classify a page, but the crawler still follows its links without
+    # publishing an output row for that page.
+    page_role: PageRole = "record"
+    # A template is a match only when every required field is present in the
+    # row it extracted. Empty preserves the pre-0.4 behavior.
+    required_fields: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if (
@@ -103,6 +111,8 @@ class TemplateSpec:
             raise ValueError("unsupported template engine")
         if self.origin not in ("org", "system"):
             raise ValueError("unsupported template origin")
+        if self.page_role not in ("record", "navigation", "ignore"):
+            raise ValueError("unsupported template page role")
         if not self.mappings or len(self.mappings) > 1_000:
             raise ValueError("a template needs between 1 and 1000 mappings")
         for field_id, expressions in self.mappings.items():
@@ -119,6 +129,12 @@ class TemplateSpec:
                 for expression in expressions
             ):
                 raise ValueError("mapping expressions must contain 1-4096 characters")
+        if len(self.required_fields) > 1_000:
+            raise ValueError("a template supports at most 1000 required fields")
+        if len(set(self.required_fields)) != len(self.required_fields):
+            raise ValueError("required template fields must be unique")
+        if any(field_id not in self.mappings for field_id in self.required_fields):
+            raise ValueError("required template fields must exist in mappings")
 
     @staticmethod
     def normalize_mappings(raw: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:

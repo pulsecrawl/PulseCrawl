@@ -110,6 +110,29 @@ class TestLocalCrawl:
         assert by_url["https://b.example/story"]["_template_origin"] == "system"
         assert result.stats["templateCoverage"]["b.example"]["needsTemplate"] is True
 
+    def test_required_fields_publish_only_target_records(self):
+        fetcher = FakeFetcher({
+            "https://shop.example/": '<h1>Catalog</h1><a href="/one">one</a>',
+            "https://shop.example/one": '<h1>One</h1><span class="p">5</span>',
+        })
+        result = crawl(
+            ["https://shop.example/"],
+            templates=[{
+                "template_id": "product",
+                "engine": "css",
+                "mappings": {"fld_title": "h1", "fld_price": ".p"},
+                "required_fields": ["fld_title", "fld_price"],
+            }],
+            fields=FIELDS,
+            scope={"maxDepth": 1},
+            politeness={"requestsPerSecond": 1000, "respectRobotsTxt": False},
+            fetcher=fetcher,
+        )
+        assert [row["title"] for row in result.records] == ["One"]
+        coverage = result.stats["templateCoverage"]["shop.example"]
+        assert coverage["recordPages"] == 1
+        assert coverage["unmatchedPages"] == 1
+
     def test_rejects_mixed_legacy_and_stack_inputs(self):
         try:
             crawl(

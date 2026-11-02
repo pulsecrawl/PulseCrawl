@@ -40,6 +40,8 @@ class TemplateResolver:
             if selected:
                 tier = "system_fallback"
         records, winner, provenance, conflicts = self._merge(selected)
+        if winner is not None and winner.page_role != "record":
+            records, provenance, conflicts = [], [], []
         return TemplateResolution(
             records,
             winner,
@@ -53,11 +55,22 @@ class TemplateResolver:
 
     @staticmethod
     def _matches(extractors, body):
-        return [
-            (template, rows)
-            for template, extract in extractors
-            if (rows := extract(body, template.mappings))
-        ]
+        matches = []
+        for template, extract in extractors:
+            rows = extract(body, template.mappings)
+            if template.required_fields:
+                rows = [
+                    row
+                    for row in rows
+                    if all(
+                        row.get(field_id) is not None
+                        and str(row[field_id]).strip()
+                        for field_id in template.required_fields
+                    )
+                ]
+            if rows:
+                matches.append((template, rows))
+        return matches
 
     @staticmethod
     def _merge(selected):
@@ -68,6 +81,8 @@ class TemplateResolver:
         provenance = [{key: winner.template_id for key in row} for row in records]
         conflicts = []
         for template, rows in selected[1:]:
+            if template.page_role != winner.page_role:
+                continue
             if len(rows) != 1:
                 continue
             for record, sources in zip(records, provenance):

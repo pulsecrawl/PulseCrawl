@@ -100,23 +100,35 @@ class WorkspaceSyncService:
                 field_map.get(str(field_id), str(field_id)): expression
                 for field_id, expression in template["mappings"].items()
             }
+            required_fields = [
+                field_map.get(str(field_id), str(field_id))
+                for field_id in template.get("requiredFields", ())
+            ]
+            page_role = str(template.get("pageRole", "record"))
             if existing:
                 if (
                     existing.get("outputSchemaId") != output_schema_id
                     or existing.get("engine") != template.get("engine")
                     or existing.get("mappings") != mappings
+                    or existing.get("pageRole", "record") != page_role
+                    or list(existing.get("requiredFields", ())) != required_fields
                 ):
                     raise ValueError(
                         f"template {template['name']!r} exists with different contents"
                     )
                 remote = existing
             else:
+                create_values = {
+                    "output_schema_id": output_schema_id,
+                    "engine": str(template["engine"]),
+                    "mappings": mappings,
+                }
+                if page_role != "record":
+                    create_values["page_role"] = page_role
+                if required_fields:
+                    create_values["required_fields"] = required_fields
                 remote = self._gateway.create(
-                    "templates",
-                    str(template["name"]),
-                    output_schema_id=output_schema_id,
-                    engine=str(template["engine"]),
-                    mappings=mappings,
+                    "templates", str(template["name"]), **create_values
                 )
                 remote_templates.append(remote)
             template_map[local_id] = str(remote["templateId"])

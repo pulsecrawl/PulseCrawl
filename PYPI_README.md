@@ -51,6 +51,8 @@ for independently runnable workspace setup and explicitly opted-in live crawling
 ## Features and boundaries
 
 - CSS, JSON-LD, and metadata extraction with URL-scoped template stacks.
+- Positive `requiredFields` checks that let navigation pages discover links
+  without publishing false article or product rows.
 - Robots checks, request pacing, bounded responses, redirect authorization,
   and private-network blocking by default.
 - Portable workspaces with dataset history, SQL, compaction, and backup/restore.

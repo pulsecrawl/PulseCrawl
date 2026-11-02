@@ -100,6 +100,12 @@ def _templates(entries: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             or ()
         )
         mappings = dict(raw["mappings"])
+        page_role = str(raw.get("page_role") or raw.get("pageRole") or "record")
+        if page_role not in ("record", "navigation", "ignore"):
+            raise ValueError("unsupported template page role")
+        required_fields = list(
+            raw.get("required_fields") or raw.get("requiredFields") or ()
+        )
         if not mappings or len(mappings) > 1_000:
             raise ValueError("a template needs between 1 and 1000 field mappings")
         for expression in mappings.values():
@@ -114,6 +120,12 @@ def _templates(entries: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 raise ValueError(
                     "mapping fallback chains need 1-100 expressions up to 4096 characters"
                 )
+        if len(required_fields) > 1_000:
+            raise ValueError("a template supports at most 1000 required fields")
+        if len(set(str(value) for value in required_fields)) != len(required_fields):
+            raise ValueError("required template fields must be unique")
+        if any(str(field_id) not in mappings for field_id in required_fields):
+            raise ValueError("required template fields must exist in mappings")
         if len(hosts) + len(patterns) > 2_000:
             raise ValueError("template scope supports at most 2000 hosts and patterns")
         item: dict[str, Any] = {
@@ -127,6 +139,10 @@ def _templates(entries: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             },
             "origin": raw.get("origin", "org"),
         }
+        if page_role != "record" or "pageRole" in raw or "page_role" in raw:
+            item["pageRole"] = page_role
+        if required_fields:
+            item["requiredFields"] = [str(value) for value in required_fields]
         if hosts or patterns:
             item["scope"] = {
                 **({"hosts": list(hosts)} if hosts else {}),

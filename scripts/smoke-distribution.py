@@ -14,14 +14,21 @@ from pulsecrawl import PulseCrawl, Workspace, __version__, crawl
 from pulsecrawl.domain.crawling.model import FetchResult
 
 URL = "https://release-smoke.example/page"
+NAVIGATION_URL = "https://release-smoke.example/navigation"
 FIELDS = [{"fieldId": "title", "name": "title", "type": "string"}]
-TEMPLATES = [{"engine": "meta", "mappings": {"title": "<title>"}}]
+TEMPLATES = [{
+    "engine": "meta",
+    "mappings": {"title": "<title>"},
+    "requiredFields": ["title"],
+}]
 
 
 class FixtureFetcher:
     async def fetch(self, url, *, user_agent):
         if url == URL:
             body = "<title>Installed wheel works</title>"
+        elif url == NAVIGATION_URL:
+            body = "<title>Navigation only</title>"
         elif url == "https://release-smoke.example/robots.txt":
             body = "User-agent: *\nAllow: /\n"
         else:
@@ -79,6 +86,19 @@ def main():
         and result.records[0]["title"] == "Installed wheel works"
     )
     assert PulseCrawl is not None
+    suppressed = crawl(
+        seeds=[NAVIGATION_URL],
+        templates=[{
+            "engine": "css",
+            "mappings": {"title": "article h1"},
+            "requiredFields": ["title"],
+        }],
+        fields=FIELDS,
+        scope={"maxUrlsPerExecution": 1, "maxDepth": 0},
+        fetcher=FixtureFetcher(),
+    )
+    assert suppressed.records == []
+    assert suppressed.stats["pagesFetched"] == 1
     if args.workspace:
         with tempfile.TemporaryDirectory(
             prefix="pulsecrawl-release-smoke-"

@@ -17,6 +17,8 @@ class _Templates(_Resource):
         output_schema_id: str,
         engine: str,
         mappings: Mapping[str, Any],
+        page_role: str = "record",
+        required_fields: tuple[str, ...] | list[str] = (),
     ) -> dict:
         return self._c._request(
             "POST",
@@ -26,6 +28,8 @@ class _Templates(_Resource):
                 "outputSchemaId": output_schema_id,
                 "engine": engine,
                 "mappings": dict(mappings),
+                "pageRole": page_role,
+                "requiredFields": list(required_fields),
             },
         )
 

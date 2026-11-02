@@ -2,7 +2,10 @@
 
 from pulsecrawl.domain.crawling.model import Record
 from pulsecrawl.domain.templates.coercion import coerce, CoercionError
-from pulsecrawl.application.templates.resolution import TemplateResolver
+from pulsecrawl.application.templates.resolution import (
+    TemplateResolution,
+    TemplateResolver,
+)
 
 
 class RecordExtractor:
@@ -11,7 +14,7 @@ class RecordExtractor:
 
     def extract(
         self, intent, extractors, system_extractors, body, source_url, fetched_at
-    ) -> tuple[list[Record], str | None]:
+    ) -> tuple[list[Record], TemplateResolution]:
         resolution = self._resolver.resolve(
             extractors, system_extractors, body, source_url
         )
@@ -34,6 +37,13 @@ class RecordExtractor:
                     )
                 except CoercionError:
                     fields[field_spec.name] = None
+            required_names = {
+                spec.name
+                for field_id in (base_template.required_fields if base_template else ())
+                if (spec := intent.schema.by_id(field_id)) is not None
+            }
+            if required_names and any(fields[name] is None for name in required_names):
+                continue
             if any(v is not None for v in fields.values()):
                 records.append(
                     Record(
@@ -47,4 +57,4 @@ class RecordExtractor:
                         match_tier=match_tier,
                     )
                 )
-        return records, match_tier
+        return records, resolution
