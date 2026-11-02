@@ -100,4 +100,9 @@ class IntentMapper:
                 user_agent=politeness.get("userAgent") or DEFAULT_USER_AGENT,
             ),
             store_raw_pages=bool(intent.get("storeRawPages", True)),
+            max_duration_seconds=(
+                float(intent["maxDurationSeconds"])
+                if intent.get("maxDurationSeconds") is not None
+                else None
+            ),
         )

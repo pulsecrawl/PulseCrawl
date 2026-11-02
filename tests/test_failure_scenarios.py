@@ -204,8 +204,9 @@ def test_scheduler_occurrence_is_exactly_once_across_process_loss(
     workspace, crash_point
 ):
     dataset, job = add_job(workspace)
-    workspace.schedules.set(job["jobId"], "0 * * * *")
-    scheduled_for = "2026-01-01T00:00:00+00:00"
+    now = datetime.now(timezone.utc)
+    workspace.schedules.set(job["jobId"], f"{now.minute} * * * *")
+    scheduled_for = now.replace(second=0, microsecond=0).isoformat()
     workspace.state.execute(
         "UPDATE schedules SET next_run_at=? WHERE job_id=?",
         (scheduled_for, job["jobId"]),

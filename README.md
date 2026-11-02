@@ -54,7 +54,7 @@ offline recipe demos are separate repository examples, not installed modules.
 ## Local crawling and workspaces
 
 Crawl in memory, or use a portable workspace for durable SQLite state,
-Parquet dataset versions, embedded DuckDB queries, and hourly schedules.
+Parquet dataset versions, embedded DuckDB queries, and time-bounded schedules.
 
 The following example makes live HTTP requests (including robots checks).
 Before running it, review the target's access policy and replace the contact
@@ -94,7 +94,8 @@ database service. If the native scheduler is interrupted, its SQLite runner
 lease expires (or is released on graceful shutdown) and startup resumes the
 execution's durable Pending URLs queue without creating another execution intent.
 
-The following creates a job and enables an hourly schedule; it does not start
+The following creates a job and enables an hourly schedule with a 58-minute
+active crawl window; it does not start
 the scheduler. Replace the contact placeholder before starting scheduled crawls.
 
 ```python
@@ -122,8 +123,20 @@ with Workspace.init("./my-crawls") as pc:
             "userAgent": "YourCrawler/1.0 (+https://your-domain.example/contact)",
         },
     )
-    pc.schedules.set(job["jobId"], "4 * * * *", timezone_name="UTC")
+    pc.schedules.set(
+        job["jobId"],
+        "4 * * * *",
+        timezone_name="UTC",
+        max_duration_seconds=58 * 60,
+    )
 ```
+
+An execution ends successfully when its Pending URLs are exhausted, its URL
+limit is reached, or its active time window expires. Records completed before
+the deadline are published normally. Scheduled starts remain aligned to cron
+boundaries, executions for one job never overlap, and expired occurrences are
+recorded and skipped rather than launched as catch-up bursts. Five minutes is
+the shortest supported cadence.
 
 The workspace is one copyable directory. JSON definitions and Parquet
 outputs are human-owned; `state/pulsecrawl.sqlite` supplies transactional

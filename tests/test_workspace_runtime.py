@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from pulsecrawl.core.model import FetchResult, PendingUrl, Record, RobotsCacheEntry, VisitedRow
@@ -116,6 +116,58 @@ def test_workspace_rejects_bad_definitions(workspace):
             "duplicate-fields",
             fields=[FIELDS[0], {**FIELDS[1], "name": "TITLE"}],
         )
+    dataset = make_dataset(workspace)
+    with pytest.raises(ValueError, match="max_duration_seconds"):
+        workspace.jobs.create(
+            "bad duration",
+            seeds=["https://duration.example/"],
+            dataset_id=dataset["datasetId"],
+            templates=[{"engine": "css", "mappings": {"fld_title": "h1"}}],
+            max_duration_seconds=0,
+        )
+
+
+def test_time_bounded_execution_publishes_completed_records(workspace):
+    dataset = make_dataset(workspace)
+    job = make_job(workspace, dataset)
+
+    class SlowFetcher(FakeFetcher):
+        async def fetch(self, url, *, user_agent):
+            # Leave enough headroom for workspace setup on slower CI runners,
+            # then cross the deadline while the first request is in flight.
+            await asyncio.sleep(0.6)
+            return await super().fetch(url, user_agent=user_agent)
+
+    first = "https://a.example/"
+    second = "https://a.example/second"
+    execution = workspace.jobs.run(
+        job["jobId"],
+        fetcher=SlowFetcher({
+            first: (
+                '<h1>First</h1><link rel="canonical" href="https://a.example/">'
+                '<a href="/second">second</a>'
+            ),
+            second: (
+                '<h1>Second</h1>'
+                '<link rel="canonical" href="https://a.example/second">'
+            ),
+        }),
+        max_duration_seconds=0.5,
+    )
+
+    assert execution["status"] == "succeeded"
+    assert execution["stopReason"] == "time_limit_reached"
+    assert execution["pendingUrlsAtClose"] == 1
+    assert execution["stats"]["materializedRows"] == 1
+    assert workspace.datasets.query(
+        dataset["datasetId"], "SELECT title FROM dataset"
+    )["rows"] == [["First"]]
+    rows = workspace.state.execute(
+        "SELECT status,error FROM visited WHERE execution_id=?",
+        (execution["executionId"],),
+    ).fetchall()
+    assert {row["status"] for row in rows} == {"fetched", "skipped"}
+    assert any("time limit" in (row["error"] or "") for row in rows)
 
 
 def test_directory_catalog_can_define_schema_template_and_job(workspace):
@@ -584,18 +636,22 @@ async def test_sqlite_adapters_are_durable_and_shared(workspace):
     assert await gate_b.reserve("local", "https://x", 1, 0) > 0
 
 
-def test_scheduler_hourly_validation_and_due_execution(workspace):
+def test_scheduler_five_minute_validation_and_due_execution(workspace):
     dataset = make_dataset(workspace)
     job = make_job(workspace, dataset)
-    schedule = workspace.schedules.set(job["jobId"], "4 * * * *", timezone_name="UTC")
+    now = datetime.now(timezone.utc)
+    schedule = workspace.schedules.set(
+        job["jobId"], f"{now.minute} * * * *", timezone_name="UTC"
+    )
     assert schedule["status"] == "active"
-    with pytest.raises(ValueError, match="at least one hour"):
-        validate_cron("*/30 * * * *")
+    assert validate_cron("*/5 * * * *")[0] == "*/5 * * * *"
+    with pytest.raises(ValueError, match="at least five minutes"):
+        validate_cron("*/4 * * * *")
     with pytest.raises(ValueError, match="five-field"):
         validate_cron("0 * * * * *")
     workspace.state.execute(
         "UPDATE schedules SET next_run_at=? WHERE job_id=?",
-        ("2026-01-01T00:04:00+00:00", job["jobId"]),
+        (now.replace(second=0, microsecond=0).isoformat(), job["jobId"]),
     )
     results = workspace.schedules.run_due(
         fetcher=FakeFetcher({"https://a.example/": "<h1>Scheduled</h1>"})
@@ -607,6 +663,42 @@ def test_scheduler_hourly_validation_and_due_execution(workspace):
     )
     assert saved["status"] == "paused"
     assert workspace.schedules.resume(job["jobId"])["status"] == "active"
+
+
+def test_scheduler_applies_window_and_skips_expired_occurrences(workspace):
+    dataset = make_dataset(workspace)
+    job = make_job(workspace, dataset)
+    schedule = workspace.schedules.set(
+        job["jobId"], "*/5 * * * *", max_duration_seconds=60
+    )
+    assert schedule["maxDurationSeconds"] == 60
+    assert schedule["misfirePolicy"] == "skip"
+
+    expired = (datetime.now(timezone.utc) - timedelta(minutes=16)).isoformat()
+    workspace.state.execute(
+        "UPDATE schedules SET next_run_at=? WHERE job_id=?",
+        (expired, job["jobId"]),
+    )
+    assert workspace.schedules.run_due(
+        fetcher=FakeFetcher({"https://a.example/": "<h1>Too late</h1>"})
+    ) == []
+    updated = workspace.schedules.list()[0]
+    assert updated["nextRunAt"] > datetime.now(timezone.utc).isoformat()
+    assert updated["missedRunCount"] > 1
+    assert updated["lastMissedAt"] is not None
+
+
+def test_scheduler_rejects_invalid_execution_window(workspace):
+    dataset = make_dataset(workspace)
+    job = make_job(workspace, dataset)
+    with pytest.raises(ValueError, match="max_duration_seconds"):
+        workspace.schedules.set(
+            job["jobId"], "*/5 * * * *", max_duration_seconds=0
+        )
+    with pytest.raises(ValueError, match="misfire_policy"):
+        workspace.schedules.set(
+            job["jobId"], "*/5 * * * *", misfire_policy="catch_up"
+        )
 
 
 def test_scheduler_recovers_queued_execution_after_restart(workspace):
