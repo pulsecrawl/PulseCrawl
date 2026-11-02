@@ -15,11 +15,9 @@ Preparation is not
 publication: no account, publisher, GitHub environment, tag, or upload is
 created by these local files.
 
-The repository owner authorized a one-time manual production upload of `0.1.1`
-using the existing project API token, without TestPyPI rehearsal or a separate
-publishing-environment approval. The owner separately approved the same
-one-time manual upload route for `0.2.0`, after its full CI and package checks
-pass. These release-specific exceptions do not configure Trusted
+The repository owner authorized one-time manual production uploads of `0.1.1`
+and `0.2.0` using the existing project API token, without TestPyPI rehearsal.
+These release-specific exceptions did not configure Trusted
 Publishing or attestations, do not weaken branch/tag protections, and do
 not authorize future uploads. Full CI on the exact release commit, clean-source
 builds, archive/privacy checks, and fresh-install verification remain required.
@@ -50,12 +48,14 @@ holder's participation. No personal maintainer identity is added to metadata.
 
 In `pulsecrawl/PulseCrawl`, create environments named exactly `testpypi` and
 `pypi`. Restrict both to the protected `main` branch, since dispatch runs from
-`main` and checks out a reviewed release tag for its build. Configure required
-reviewers, **prevent self-review**, and disallow protection-rule bypass for the
-production environment. Both environments must allow **protected branches
-only**, have required reviewers, and prevent self-review; the upload preflight
-checks those settings and that `main` is protected. Do not rely on a workflow's `environment` declaration to install
-these protections: GitHub can create an unprotected environment automatically.
+`main` and checks out a reviewed release tag for its build. This is a
+single-maintainer repository, so the environments do not require a second
+reviewer. Both environments must allow **protected branches only**; the upload
+preflight checks that setting, confirms that `main` is protected, and rejects a
+required-reviewer rule that would make publication impossible for the sole
+maintainer. Do not rely on a workflow's `environment` declaration to install
+the branch restriction: GitHub can create an unprotected environment
+automatically.
 
 Require the **Release validation complete** check and reviewed changes on `main`;
 this aggregates the full platform matrix, minimum dependency tests/security
@@ -64,8 +64,8 @@ preflight requires every mandatory job to succeed in the latest OSS CI push
 run/attempt for the **exact tagged SHA** on `main`, not merely an ancestor of it.
 It also requires the OSS repository to be public. Protect release tags
 against unauthorized creation, movement, or deletion. If the repository plan
-does not support the needed environment protection, keep upload targets unused
-until an equivalent approval mechanism is reviewed.
+does not support the needed environment branch restriction, keep upload targets
+unused until an equivalent control is reviewed.
 
 ## Token-free Trusted Publishers
 
@@ -157,9 +157,9 @@ checkout from masking missing installed modules.
    reviewed tag. This builds once, tests, uploads to TestPyPI, downloads its
    exact wheel **without dependencies**, compares its bytes to the artifact,
    and installs it with dependencies resolved from production PyPI only.
-5. Inspect TestPyPI rendering and results while the `pypi` environment awaits
-   approval. Approve production only when satisfied. The production job uploads
-   the **same** archives, not a rebuild. No API token secret is required.
+5. The workflow verifies the TestPyPI wheel byte-for-byte and installs it in a
+   clean environment before the production job starts. The production job
+   uploads the **same** archives, not a rebuild. No API token secret is required.
 6. Verify the production page, files, and attestations, then install
    `pulsecrawl==X.Y.Z` and `pulsecrawl[workspace]==X.Y.Z` in fresh environments.
    Run smoke checks and `pip check`; record the released hashes and run URL.
@@ -169,7 +169,8 @@ checkout from masking missing installed modules.
 Target `testpypi` stops after rehearsal and its verification. It is useful for
 a disposable rehearsal version, but uploads are immutable: a later `pypi` run
 reuploads to TestPyPI first and **will fail if that version is already there**.
-For a production candidate, prefer the single `pypi` run and approval pause.
+For a production candidate, prefer the single `pypi` run and its automatic
+TestPyPI verification gate.
 If a post-upload job fails, rerun **failed jobs**, not the whole workflow; never
 delete/reuse a released version or enable `skip-existing` to hide a mismatch.
 The current stable-tag validator accepts `vX.Y.Z`; prerelease versions require
@@ -179,10 +180,10 @@ an explicit validator/citation/version policy update first.
 
 - [ ] PyPI and TestPyPI accounts verified, 2FA and recovery access configured.
 - [ ] Public source reviewed, committed, pushed; required CI checks pass.
-- [ ] Protected environments, main branch, release tags, and reviewers configured.
+- [ ] Protected environments, main branch, and release tags configured.
 - [ ] Both Trusted Publishers configured with the exact values above.
 - [ ] Reviewed tagged candidate built and its artifacts approved.
 - [ ] Source, Git identities, wheel contents, and sdist ownership/content privacy checked.
 - [ ] TestPyPI upload, exact-byte comparison, and clean-install checks pass.
-- [ ] Production approval, upload, attestations, and fresh PyPI installs verified.
+- [ ] Production upload, attestations, and fresh PyPI installs verified.
 - [ ] Release notes published and unpublished-install wording updated.
