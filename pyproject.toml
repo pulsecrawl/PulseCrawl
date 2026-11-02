@@ -22,7 +22,7 @@ classifiers = [
 dependencies = [
     "aiohttp>=3.14.5,<4",
     "httpx>=0.27,<1",
-    "selectolax>=0.3.10,<0.5",
+    "selectolax>=0.3.10,<1.1",
 ]
 
 [project.urls]
