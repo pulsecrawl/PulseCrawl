@@ -68,7 +68,7 @@ def api(endpoint, *parameters, paginate=False):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sha", required=True)
-    parser.add_argument("--target", choices=["testpypi", "pypi"], required=True)
+    parser.add_argument("--target", choices=["pypi"], required=True)
     args = parser.parse_args()
     if not re.fullmatch(r"[a-f0-9]{40}", args.sha):
         parser.error("a full commit SHA is required")
@@ -79,8 +79,9 @@ def main():
         branch = api(f"repos/{REPOSITORY}/branches/main")
         if branch.get("protected") is not True:
             raise ValueError("main must be protected before publishing")
-        for name in (["testpypi", "pypi"] if args.target == "pypi" else ["testpypi"]):
-            require_protected_environment(api(f"repos/{REPOSITORY}/environments/{name}"))
+        require_protected_environment(
+            api(f"repos/{REPOSITORY}/environments/pypi")
+        )
         response = api(f"repos/{REPOSITORY}/actions/workflows/oss-ci.yml/runs",
                        f"head_sha={args.sha}", "branch=main", "event=push", "per_page=100")
         run = require_successful_run(response["workflow_runs"], args.sha)

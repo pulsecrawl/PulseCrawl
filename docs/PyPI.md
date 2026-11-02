@@ -16,7 +16,7 @@ publication: no account, publisher, GitHub environment, tag, or upload is
 created by these local files.
 
 The repository owner authorized one-time manual production uploads of `0.1.1`
-and `0.2.0` using the existing project API token, without TestPyPI rehearsal.
+and `0.2.0` using the existing project API token, directly to PyPI.
 These release-specific exceptions did not configure Trusted
 Publishing or attestations, do not weaken branch/tag protections, and do
 not authorize future uploads. Full CI on the exact release commit, clean-source
@@ -33,10 +33,7 @@ automated process below remains the intended path for subsequent releases.
    CAPTCHA, review and accept PyPI's terms, and verify the email.
 3. Enable two-factor authentication and securely retain recovery codes.
    Do not commit credentials or recovery codes or paste them into chat.
-4. Create a separate account on [TestPyPI](https://test.pypi.org/account/register/)
-   and complete its email verification and security setup too. PyPI and
-   TestPyPI accounts and publisher configurations are separate.
-5. Arrange continuity/recovery access through the project mailbox and,
+4. Arrange continuity/recovery access through the project mailbox and,
    once the project exists, another authorized owner. An email inbox alone
    does not recover lost two-factor authentication.
 
@@ -46,11 +43,11 @@ holder's participation. No personal maintainer identity is added to metadata.
 
 ## Protected GitHub environments — required before uploading
 
-In `pulsecrawl/PulseCrawl`, create environments named exactly `testpypi` and
-`pypi`. Restrict both to the protected `main` branch, since dispatch runs from
+In `pulsecrawl/PulseCrawl`, create an environment named exactly `pypi`.
+Restrict it to the protected `main` branch, since dispatch runs from
 `main` and checks out a reviewed release tag for its build. This is a
-single-maintainer repository, so the environments do not require a second
-reviewer. Both environments must allow **protected branches only**; the upload
+single-maintainer repository, so the environment does not require a second
+reviewer. The environment must allow **protected branches only**; the upload
 preflight checks that setting, confirms that `main` is protected, and rejects a
 required-reviewer rule that would make publication impossible for the sole
 maintainer. Do not rely on a workflow's `environment` declaration to install
@@ -69,16 +66,16 @@ unused until an equivalent control is reviewed.
 
 ## Token-free Trusted Publishers
 
-After both accounts are ready, use each index's account **Publishing** page
-to add a pending GitHub publisher:
+Use the PulseCrawl project's PyPI **Publishing** settings to add this GitHub
+publisher:
 
-| Field | TestPyPI | PyPI |
-| --- | --- | --- |
-| Project name | `pulsecrawl` | `pulsecrawl` |
-| Repository owner | `pulsecrawl` | `pulsecrawl` |
-| Repository name | `PulseCrawl` | `PulseCrawl` |
-| Workflow filename | `oss-release.yml` | `oss-release.yml` |
-| Environment | `testpypi` | `pypi` |
+| Field | Value |
+| --- | --- |
+| Project name | `pulsecrawl` |
+| Repository owner | `pulsecrawl` |
+| Repository name | `PulseCrawl` |
+| Workflow filename | `oss-release.yml` |
+| Environment | `pypi` |
 
 Use the workflow **filename**, not its display name or full path. Verify these
 values against the actual public Git remote before configuring trust. Do not
@@ -154,23 +151,17 @@ checkout from masking missing installed modules.
 3. Run **Prepare and publish OSS release** from `main` with target `build` and
    the release tag. Review its wheel, sdist, test results, and metadata.
 4. After publisher and environment setup, dispatch target `pypi` with the same
-   reviewed tag. This builds once, tests, uploads to TestPyPI, downloads its
-   exact wheel **without dependencies**, compares its bytes to the artifact,
-   and installs it with dependencies resolved from production PyPI only.
-5. The workflow verifies the TestPyPI wheel byte-for-byte and installs it in a
-   clean environment before the production job starts. The production job
-   uploads the **same** archives, not a rebuild. No API token secret is required.
+   reviewed tag. The workflow builds once, runs the full candidate tests and
+   clean-install checks, and uploads those exact archives directly to PyPI.
+5. The post-upload job downloads the production wheel without dependencies,
+   compares it byte-for-byte with the tested artifact, installs it with the
+   workspace extra, and reruns the smoke checks. No API token secret is required.
 6. Verify the production page, files, and attestations, then install
    `pulsecrawl==X.Y.Z` and `pulsecrawl[workspace]==X.Y.Z` in fresh environments.
    Run smoke checks and `pip check`; record the released hashes and run URL.
 7. Publish reviewed release notes and update descriptions that still say the
    package is unpublished. Do not mark launch tasks complete before verification.
 
-Target `testpypi` stops after rehearsal and its verification. It is useful for
-a disposable rehearsal version, but uploads are immutable: a later `pypi` run
-reuploads to TestPyPI first and **will fail if that version is already there**.
-For a production candidate, prefer the single `pypi` run and its automatic
-TestPyPI verification gate.
 If a post-upload job fails, rerun **failed jobs**, not the whole workflow; never
 delete/reuse a released version or enable `skip-existing` to hide a mismatch.
 The current stable-tag validator accepts `vX.Y.Z`; prerelease versions require
@@ -178,12 +169,11 @@ an explicit validator/citation/version policy update first.
 
 ## Launch checklist (not yet completed)
 
-- [ ] PyPI and TestPyPI accounts verified, 2FA and recovery access configured.
+- [ ] PyPI account verified, 2FA and recovery access configured.
 - [ ] Public source reviewed, committed, pushed; required CI checks pass.
 - [ ] Protected environments, main branch, and release tags configured.
-- [ ] Both Trusted Publishers configured with the exact values above.
+- [ ] PyPI Trusted Publisher configured with the exact values above.
 - [ ] Reviewed tagged candidate built and its artifacts approved.
 - [ ] Source, Git identities, wheel contents, and sdist ownership/content privacy checked.
-- [ ] TestPyPI upload, exact-byte comparison, and clean-install checks pass.
-- [ ] Production upload, attestations, and fresh PyPI installs verified.
+- [ ] Production upload, exact-byte comparison, attestations, and fresh PyPI installs verified.
 - [ ] Release notes published and unpublished-install wording updated.
