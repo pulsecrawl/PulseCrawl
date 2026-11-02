@@ -24,9 +24,9 @@ def validate_cron(expression: str, timezone_name: str = "UTC") -> tuple[str, Zon
         zone = ZoneInfo(timezone_name)
     except ZoneInfoNotFoundError as exc:
         raise ValueError(f"unknown IANA timezone: {timezone_name}") from exc
-    # Check a long occurrence window in real UTC time. This rejects every
-    # sub-hour expression, including combinations whose textual fields look
-    # harmless and timezone/DST edge cases.
+    # Check a long occurrence window in real UTC time. Five minutes is the
+    # shortest supported cadence; execution windows and non-overlap handling
+    # keep slower sites from creating overlapping catch-up crawls.
     start = datetime(2026, 1, 1, tzinfo=zone)
     iterator = _croniter(normalized, start)
     previous = iterator.get_next(datetime)
@@ -34,8 +34,8 @@ def validate_cron(expression: str, timezone_name: str = "UTC") -> tuple[str, Zon
         current = iterator.get_next(datetime)
         if (
             current.astimezone(timezone.utc) - previous.astimezone(timezone.utc)
-        ).total_seconds() < 3600:
-            raise ValueError("schedule cadence must be at least one hour")
+        ).total_seconds() < 300:
+            raise ValueError("schedule cadence must be at least five minutes")
         previous = current
     return normalized, zone
 

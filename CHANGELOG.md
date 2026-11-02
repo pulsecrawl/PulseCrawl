@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0
+
+- Add successful time-bounded workspace executions. `jobs.create`, `jobs.run`,
+  and `jobs.prepare` accept `max_duration_seconds`; completed executions
+  publish durable partial output and report `time_limit_reached`, the number of
+  Pending URLs at close, and their effective deadline.
+- Keep recurring schedules anchored to their cron boundaries. Schedules never
+  overlap executions for the same job, skip expired occurrences instead of
+  launching catch-up bursts, and retain missed-occurrence counters.
+- Allow recurring schedules with a minimum five-minute cadence. The scheduler
+  automatically reserves 10% of short intervals, bounded between 30 seconds
+  and two minutes, for publication and cleanup; callers can configure a
+  smaller execution window explicitly.
+- Upgrade SQLite state to schema 6 for schedule execution windows and
+  missed-occurrence evidence. Existing workspaces receive the standard
+  pre-migration backup before the transactional upgrade.
+
 ## 0.2.0
 
 - Retry transient Windows atomic snapshot replacement conflicts within a

@@ -89,11 +89,12 @@ the `PendingUrls` protocol from `application/ports/crawling.py`, and the
 new names, without retaining old-name aliases. Top-level `crawl` and
 `Workspace` usage is unchanged.
 
-SQLite schema 5 stores this queue in `pending_urls`. Opening an older workspace
+SQLite schema 5 introduced this queue as `pending_urls`; schema 6 adds schedule
+execution windows and missed-occurrence evidence. Opening an older workspace
 creates a pre-migration backup and upgrades the table transactionally, retaining
 URL data, FIFO sequence IDs, readiness times, retry counts, and leases. Stop all
 processes using an older package before upgrading a workspace. Downgrading
-requires restoring the pre-migration backup rather than opening schema 5 with
+requires restoring the pre-migration backup rather than opening schema 6 with
 an older package.
 
 ## Lifecycle, time and durability contracts
@@ -145,7 +146,11 @@ have a second implementation of extraction precedence.
 
 Schedules separate due-claim persistence, cron calculation and process
 signals. The synchronous workspace scheduler invokes synchronous inbound
-job/execution facades; async callers use application services directly.
+job/execution facades; async callers use application services directly. Cron
+boundaries are fixed, executions for one job do not overlap, and elapsed
+occurrences are skipped instead of replayed in a burst. Time-bounded executions
+publish completed rows and distinguish `time_limit_reached` from URL-limit and
+Pending-URL exhaustion.
 
 ## Extending and validating
 

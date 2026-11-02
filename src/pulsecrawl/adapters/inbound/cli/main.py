@@ -314,7 +314,10 @@ def _main(argv: list[str] | None = None) -> int:
             elif args.schedule_command == "set":
                 _print(
                     workspace.schedules.set(
-                        args.job_id, args.cron, timezone_name=args.timezone
+                        args.job_id,
+                        args.cron,
+                        timezone_name=args.timezone,
+                        max_duration_seconds=args.max_duration_seconds,
                     )
                 )
             elif args.schedule_command == "pause":
