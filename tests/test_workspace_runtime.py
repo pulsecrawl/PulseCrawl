@@ -133,7 +133,9 @@ def test_time_bounded_execution_publishes_completed_records(workspace):
 
     class SlowFetcher(FakeFetcher):
         async def fetch(self, url, *, user_agent):
-            await asyncio.sleep(0.02)
+            # Leave enough headroom for workspace setup on slower CI runners,
+            # then cross the deadline while the first request is in flight.
+            await asyncio.sleep(0.6)
             return await super().fetch(url, user_agent=user_agent)
 
     first = "https://a.example/"
@@ -150,7 +152,7 @@ def test_time_bounded_execution_publishes_completed_records(workspace):
                 '<link rel="canonical" href="https://a.example/second">'
             ),
         }),
-        max_duration_seconds=0.01,
+        max_duration_seconds=0.5,
     )
 
     assert execution["status"] == "succeeded"
