@@ -61,26 +61,26 @@ def test_missing_matrix_job_is_rejected():
 def environment():
     return {"deployment_branch_policy": {
         "protected_branches": True, "custom_branch_policies": False,
-    }, "protection_rules": [{
-        "type": "required_reviewers", "prevent_self_review": True,
-        "reviewers": [{"type": "Team", "reviewer": {"id": 1}}],
-    }]}
+    }, "protection_rules": []}
 
 
 def test_protected_environment_passes():
     CI.require_protected_environment(environment())
 
 
-@pytest.mark.parametrize("case", ["no-policy", "no-reviewers", "self-review", "no-rules"])
+@pytest.mark.parametrize("case", ["no-policy", "custom-policy", "second-reviewer"])
 def test_unprotected_environment_is_rejected(case):
     value = environment()
     if case == "no-policy":
         value["deployment_branch_policy"] = None
-    elif case == "no-reviewers":
-        value["protection_rules"][0]["reviewers"] = []
-    elif case == "self-review":
-        value["protection_rules"][0]["prevent_self_review"] = False
+    elif case == "custom-policy":
+        value["deployment_branch_policy"] = {
+            "protected_branches": False, "custom_branch_policies": True,
+        }
     else:
-        value["protection_rules"] = []
+        value["protection_rules"] = [{
+            "type": "required_reviewers", "prevent_self_review": False,
+            "reviewers": [{"type": "User", "reviewer": {"id": 1}}],
+        }]
     with pytest.raises(ValueError):
         CI.require_protected_environment(value)

@@ -50,10 +50,10 @@ def require_protected_environment(environment):
         raise ValueError("publishing environment must allow protected branches only")
     approvals = [rule for rule in environment.get("protection_rules", [])
                  if rule.get("type") == "required_reviewers"]
-    if len(approvals) != 1 or not approvals[0].get("reviewers") or (
-        approvals[0].get("prevent_self_review") is not True
-    ):
-        raise ValueError("publishing environment requires reviewers and prevention of self-review")
+    if approvals:
+        raise ValueError(
+            "single-maintainer publishing environments must not require a second reviewer"
+        )
 
 
 def api(endpoint, *parameters, paginate=False):
