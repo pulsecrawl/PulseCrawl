@@ -13,7 +13,7 @@ import re
 from collections import Counter
 from typing import Any, Mapping
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 
 from pulsecrawl.domain.templates.authoring import RepresentativePage, PageInspection

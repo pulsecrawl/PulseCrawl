@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Mapping
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 TITLE_EXPRESSION = "<title>"
 LITERAL_PREFIX = "literal:"

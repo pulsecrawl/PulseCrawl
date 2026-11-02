@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from typing import Any, Iterator, Mapping
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 
 def _iter_entities(html: str) -> Iterator[dict[str, Any]]:

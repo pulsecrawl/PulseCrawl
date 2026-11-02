@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Mapping
 
-from selectolax.parser import HTMLParser
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
 
 LITERAL_PREFIX = "literal:"
 ALL_SUFFIX = "::all"
