@@ -91,6 +91,7 @@ def start_workers(
     gate: Path,
     *,
     timeout: float = 20,
+    ready_paths: list[Path] | None = None,
 ) -> list[dict[str, object]]:
     processes = [
         subprocess.Popen(
@@ -107,6 +108,13 @@ def start_workers(
         )
         for arguments in argument_sets
     ]
+    if ready_paths is not None:
+        deadline = time.monotonic() + timeout
+        while not all(path.exists() for path in ready_paths):
+            assert all(process.poll() is None for process in processes)
+            if time.monotonic() >= deadline:
+                pytest.fail("worker processes did not reach the start gate")
+            time.sleep(0.01)
     gate.write_text("go", encoding="utf-8")
     reports = []
     for process, arguments in zip(processes, argument_sets):
@@ -178,6 +186,7 @@ Path(result_path).write_text(json.dumps(report), encoding="utf-8")
 def test_simultaneous_scheduler_processes_have_one_owner(workspace, tmp_path):
     gate = tmp_path / "scheduler.gate"
     results = [tmp_path / f"scheduler-{index}.json" for index in range(4)]
+    ready = [Path(f"{result}.ready") for result in results]
     script = r"""
 import json, sys, threading, time
 from pathlib import Path
@@ -185,6 +194,7 @@ from pulsecrawl import Workspace
 from pulsecrawl.errors import WorkspaceBusyError
 
 workspace_path, result_path, gate_path = sys.argv[1:]
+Path(f"{result_path}.ready").touch()
 while not Path(gate_path).exists():
     time.sleep(0.005)
 stop = threading.Event()
@@ -202,6 +212,7 @@ Path(result_path).write_text(json.dumps(report), encoding="utf-8")
         script,
         [(workspace.path, result) for result in results],
         gate,
+        ready_paths=ready,
     )
     assert [report["outcome"] for report in reports].count("owner") == 1
     assert [report["outcome"] for report in reports].count("busy") == 3
