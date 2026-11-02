@@ -394,10 +394,14 @@ def test_duckdb_query_sandbox_and_deadline(workspace):
 def test_scheduler_failure_isolation_and_shutdown_state(workspace):
     _, failing = add_job(workspace, "a-failing", "bad.example")
     _, healthy = add_job(workspace, "b-healthy", "good.example")
-    workspace.schedules.set(failing["jobId"], "0 * * * *")
-    workspace.schedules.set(healthy["jobId"], "0 * * * *")
+    now = datetime.now(timezone.utc)
+    cron = f"{now.minute} * * * *"
+    workspace.schedules.set(failing["jobId"], cron)
+    workspace.schedules.set(healthy["jobId"], cron)
+    due = now.replace(second=0, microsecond=0).isoformat()
     workspace.state.execute(
-        "UPDATE schedules SET next_run_at='2020-01-01T00:00:00+00:00'"
+        "UPDATE schedules SET next_run_at=?",
+        (due,),
     )
     results = run_due(workspace, fetcher=Fetcher(failing_host="bad.example"))
     assert [item["jobId"] for item in results] == [healthy["jobId"]]

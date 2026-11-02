@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Iterator, Sequence
 
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 
 class _SynchronizedCursor(sqlite3.Cursor):
@@ -388,3 +388,20 @@ class SQLiteState:
             "CREATE INDEX IF NOT EXISTS pending_urls_ready "
             "ON pending_urls(execution_id, state, not_before, sequence)"
         )
+
+    def _migrate_v5_to_v6(self, db: sqlite3.Connection) -> None:
+        """Persist schedule execution windows and skipped-occurrence evidence."""
+        if not self._has_column(db, "schedules", "max_duration_seconds"):
+            db.execute("ALTER TABLE schedules ADD COLUMN max_duration_seconds REAL")
+        if not self._has_column(db, "schedules", "misfire_policy"):
+            db.execute(
+                "ALTER TABLE schedules ADD COLUMN misfire_policy TEXT NOT NULL "
+                "DEFAULT 'skip'"
+            )
+        if not self._has_column(db, "schedules", "missed_run_count"):
+            db.execute(
+                "ALTER TABLE schedules ADD COLUMN missed_run_count INTEGER NOT NULL "
+                "DEFAULT 0"
+            )
+        if not self._has_column(db, "schedules", "last_missed_at"):
+            db.execute("ALTER TABLE schedules ADD COLUMN last_missed_at TEXT")

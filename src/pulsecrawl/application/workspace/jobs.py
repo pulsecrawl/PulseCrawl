@@ -1,6 +1,7 @@
 """Job definition, preparation and dispatch use cases."""
 
 from __future__ import annotations
+import math
 from typing import Any, Mapping, Sequence
 from pulsecrawl.application.ports.workspace import (
     DefinitionRepository,
@@ -47,6 +48,7 @@ class JobService:
         scope: Mapping[str, Any] | None = None,
         politeness: Mapping[str, Any] | None = None,
         store_raw_pages: bool = False,
+        max_duration_seconds: float | None = None,
     ) -> dict[str, Any]:
         if not name.strip() or len(name) > 256:
             raise ValueError("job name must contain between 1 and 256 characters")
@@ -67,6 +69,13 @@ class JobService:
             raise ValueError("maxUrlsPerExecution must be positive")
         if normalized_scope["maxUrlsTotal"] < normalized_scope["maxUrlsPerExecution"]:
             raise ValueError("maxUrlsTotal must be at least maxUrlsPerExecution")
+        if max_duration_seconds is not None and (
+            isinstance(max_duration_seconds, bool)
+            or not isinstance(max_duration_seconds, (int, float))
+            or not math.isfinite(max_duration_seconds)
+            or max_duration_seconds <= 0
+        ):
+            raise ValueError("max_duration_seconds must be finite and positive")
 
         field_ids = {str(field["fieldId"]) for field in dataset["fields"]}
 
@@ -144,6 +153,11 @@ class JobService:
             "scope": normalized_scope,
             "politeness": _politeness(politeness),
             "storeRawPages": bool(store_raw_pages),
+            "maxDurationSeconds": (
+                float(max_duration_seconds)
+                if max_duration_seconds is not None
+                else None
+            ),
             "createdAt": self._now(),
         }
         self._repository.add(definition)
@@ -169,6 +183,7 @@ class JobService:
         max_depth: int | None = None,
         store_raw_pages: bool | None = None,
         publish_records: bool = True,
+        max_duration_seconds: float | None = None,
         should_stop=None,
     ) -> dict[str, Any]:
         execution_id = execution_id or self._id(
@@ -201,6 +216,7 @@ class JobService:
             max_depth=max_depth,
             store_raw_pages=store_raw_pages,
             publish_records=publish_records,
+            max_duration_seconds=max_duration_seconds,
         )
         return await self._executions.execute(
             prepared["executionId"],
@@ -220,6 +236,7 @@ class JobService:
         max_depth: int | None = None,
         store_raw_pages: bool | None = None,
         publish_records: bool = True,
+        max_duration_seconds: float | None = None,
     ) -> dict[str, Any]:
         """Atomically freeze an intent and reserve its lifetime budget.
 
@@ -236,5 +253,6 @@ class JobService:
             max_depth=max_depth,
             store_raw_pages=store_raw_pages,
             publish_records=publish_records,
+            max_duration_seconds=max_duration_seconds,
         )
         return prepared

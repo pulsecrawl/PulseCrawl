@@ -75,9 +75,13 @@ class CrawlEngine:
         queue_visibility_resolution_s=0.0,
         should_stop=None,
         admission_remaining=None,
+        max_duration_s=None,
     ):
         self._p, self._park_threshold_s = ports, park_threshold_s
         self._should_stop = should_stop or (lambda: False)
+        if max_duration_s is not None and max_duration_s < 0:
+            raise ValueError("max_duration_s must not be negative")
+        self._max_duration_s = max_duration_s
         self._admissions = PendingUrlAdmissions(
             ports,
             remaining=admission_remaining,
@@ -95,6 +99,13 @@ class CrawlEngine:
 
     async def run(self, intent: ExecutionIntent) -> CrawlOutcome:
         stats = self._admissions.initial_stats()
+        started_at = self._p.clock.monotonic()
+
+        def remaining_time() -> float | None:
+            if self._max_duration_s is None:
+                return None
+            return self._max_duration_s - (self._p.clock.monotonic() - started_at)
+
         seed_hosts = frozenset(host_of(s) for s in intent.seeds if normalize_url(s))
         extractors = [
             (t, self._p.extractors.get_engine(t.engine)) for t in intent.templates
@@ -104,15 +115,26 @@ class CrawlEngine:
             for t in intent.system_templates
         ]
 
-        while stats.urls_attempted < intent.scope.max_pages and not self._should_stop():
+        while not self._should_stop():
+            if stats.urls_attempted >= intent.scope.max_pages:
+                return Completed(stats=stats, stop_reason="url_limit_reached")
+            remaining = remaining_time()
+            if remaining is not None and remaining <= 0:
+                return Completed(stats=stats, stop_reason="time_limit_reached")
             now = readiness_time(self._p.clock)
             item = await self._p.pending_urls.pop_ready(now)
 
             if item is None:
                 next_ready = await self._p.pending_urls.next_ready_at()
                 if next_ready is None:
-                    break  # pending_urls drained: done
+                    return Completed(
+                        stats=stats, stop_reason="pending_urls_exhausted"
+                    )
                 wait = max(next_ready - now, 0.0)
+                remaining = remaining_time()
+                if remaining is not None and wait >= remaining:
+                    await self._p.clock.sleep(max(remaining, 0.0))
+                    return Completed(stats=stats, stop_reason="time_limit_reached")
                 if wait > self._park_threshold_s:
                     return Parked(stats=stats, resume_after_s=wait)
                 await self._p.clock.sleep(wait)
@@ -122,4 +144,7 @@ class CrawlEngine:
                 intent, item, stats, seed_hosts, extractors, system_extractors
             )
 
+        # The process/container stop predicate deliberately remains distinct
+        # from successful time-bounded completion. Its lifecycle owner decides
+        # whether to resume or cancel the durable execution.
         return Completed(stats=stats)

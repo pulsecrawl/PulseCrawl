@@ -1,6 +1,7 @@
 """Crawl dependency wiring and ownership of local transport resources."""
 
 from contextlib import AsyncExitStack, asynccontextmanager
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from pulsecrawl.application.crawling.engine import CrawlEngine, EnginePorts
@@ -90,6 +91,15 @@ class LocalExecutionRuntimeFactory:
             publish_records=bool(execution["intent"].get("publishRecords", True)),
         )
         clock = EpochClock()
+        maximum_duration = intent.max_duration_seconds
+        remaining_duration = None
+        if maximum_duration is not None:
+            anchor = execution.get("scheduledFor") or started
+            anchor_time = datetime.fromisoformat(str(anchor).replace("Z", "+00:00"))
+            if anchor_time.tzinfo is None:
+                anchor_time = anchor_time.replace(tzinfo=timezone.utc)
+            elapsed = max((clock.now() - anchor_time).total_seconds(), 0.0)
+            remaining_duration = max(float(maximum_duration) - elapsed, 0.0)
         visited, pending_urls = (
             SQLiteVisitedStore(self.state),
             SQLitePendingUrls(self.state, execution_id),
@@ -125,6 +135,7 @@ class LocalExecutionRuntimeFactory:
                 park_threshold_s=float("inf"),
                 should_stop=should_stop,
                 admission_remaining=max(intent.scope.max_pages - admitted, 0),
+                max_duration_s=remaining_duration,
             )
             yield SimpleNamespace(
                 intent=intent,

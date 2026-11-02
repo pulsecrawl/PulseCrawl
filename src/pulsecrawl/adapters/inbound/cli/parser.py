@@ -161,6 +161,11 @@ def build_parser() -> argparse.ArgumentParser:
     schedule_set.add_argument("job_id")
     schedule_set.add_argument("cron")
     schedule_set.add_argument("--timezone", default="UTC")
+    schedule_set.add_argument(
+        "--max-duration-seconds",
+        type=float,
+        help="optional active crawl window; the next schedule boundary remains fixed",
+    )
     for action in ("pause", "resume"):
         item = schedule_commands.add_parser(action)
         item.add_argument("job_id")

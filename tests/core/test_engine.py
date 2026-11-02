@@ -680,6 +680,33 @@ class TestCrawlEndToEnd:
         outcome = await engine.run(intent)
         assert outcome.stats.pages_fetched == 1
 
+    async def test_time_limit_finishes_successfully_with_pending_urls(
+        self, ports, fetcher, clock
+    ):
+        add_site(fetcher)
+        intent = make_intent(
+            seeds=(f"{SITE}/",),
+            politeness=Politeness(
+                respect_robots_txt=False, requests_per_second=1000.0
+            ),
+        )
+        original = fetcher.fetch
+
+        async def timed_fetch(url, *, user_agent):
+            result = await original(url, user_agent=user_agent)
+            clock.advance(1.0)
+            return result
+
+        fetcher.fetch = timed_fetch
+        engine = CrawlEngine(ports, max_duration_s=0.5)
+        await engine.seed(intent)
+
+        outcome = await engine.run(intent)
+
+        assert outcome.stop_reason == "time_limit_reached"
+        assert outcome.stats.pages_fetched == 1
+        assert await ports.pending_urls.next_ready_at() is not None
+
     async def test_coercion_failures_null_the_field(self, ports, fetcher):
         fetcher.add(f"{SITE}/", PRODUCT.format(name="Weird", price="call us", links=""))
         intent = make_intent(seeds=(f"{SITE}/",))

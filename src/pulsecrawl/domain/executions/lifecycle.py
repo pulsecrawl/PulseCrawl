@@ -1,5 +1,6 @@
 """Execution lifecycle and budget invariants, independent of persistence."""
 
+import math
 from dataclasses import dataclass
 from pulsecrawl.domain.errors import WorkspaceError
 
@@ -42,6 +43,7 @@ def freeze_intent(
     max_depth=None,
     store_raw_pages=None,
     publish_records=True,
+    max_duration_seconds=None,
 ):
     configured_urls = int(job["scope"]["maxUrlsPerExecution"])
     if max_urls_per_execution is not None:
@@ -54,6 +56,20 @@ def freeze_intent(
             raise ValueError("max_depth must not be negative")
         configured_depth = min(configured_depth, int(max_depth))
     reservation = BudgetReservation.allocate(configured_urls, remaining, 0, 0).urls
+    configured_duration = job.get("maxDurationSeconds")
+    if max_duration_seconds is not None:
+        if (
+            isinstance(max_duration_seconds, bool)
+            or not isinstance(max_duration_seconds, (int, float))
+            or not math.isfinite(max_duration_seconds)
+            or max_duration_seconds <= 0
+        ):
+            raise ValueError("max_duration_seconds must be finite and positive")
+        configured_duration = (
+            min(float(configured_duration), float(max_duration_seconds))
+            if configured_duration is not None
+            else float(max_duration_seconds)
+        )
     return {
         "seeds": job["seeds"],
         "datasetId": job["datasetId"],
@@ -70,4 +86,5 @@ def freeze_intent(
         if store_raw_pages is None
         else bool(store_raw_pages),
         "publishRecords": bool(publish_records),
+        "maxDurationSeconds": configured_duration,
     }, reservation

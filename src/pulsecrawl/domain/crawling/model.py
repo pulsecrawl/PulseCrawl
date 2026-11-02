@@ -211,6 +211,9 @@ class ExecutionIntent:
     scope: Scope = Scope()
     politeness: Politeness = Politeness()
     store_raw_pages: bool = True
+    # A successful execution may end before its URL budget when this active
+    # runtime elapses. None preserves the historical URL/Pending-URL-only limit.
+    max_duration_seconds: float | None = None
 
     def __post_init__(self) -> None:
         if not self.templates:
@@ -230,6 +233,13 @@ class ExecutionIntent:
             for value in identifiers
         ):
             raise ValueError("execution identifiers must contain 1-256 characters")
+        if self.max_duration_seconds is not None and (
+            isinstance(self.max_duration_seconds, bool)
+            or not isinstance(self.max_duration_seconds, (int, float))
+            or not math.isfinite(self.max_duration_seconds)
+            or self.max_duration_seconds <= 0
+        ):
+            raise ValueError("max_duration_seconds must be finite and positive")
 
     @property
     def template(self) -> TemplateSpec:
@@ -342,6 +352,9 @@ class CrawlStats:
 @dataclass(frozen=True)
 class Completed:
     stats: CrawlStats
+    stop_reason: Literal[
+        "pending_urls_exhausted", "url_limit_reached", "time_limit_reached"
+    ] = "pending_urls_exhausted"
     kind: Literal["completed"] = "completed"
 
 

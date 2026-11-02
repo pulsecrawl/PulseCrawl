@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import logging
+from datetime import datetime, timedelta
 from typing import Any
 from pulsecrawl.application.ports.workspace import (
     ExecutionRepository,
@@ -153,6 +154,7 @@ class ExecutionService:
         self._tasks.register(execution_id, current_task)
         try:
             self._repository.start(execution_id, started)
+            execution = self.get(execution_id)
             async with self._runtime.open(
                 execution,
                 started,
@@ -210,6 +212,17 @@ class ExecutionService:
             item = writer.finalize(completed_at=self._now())
             stats = dataclasses.asdict(outcome.stats)
             stats["materializedRows"] = item["rows"] if item else 0
+            stats["stop_reason"] = outcome.stop_reason
+            stats["pending_urls_at_close"] = pending_urls.pending_count()
+            maximum_duration = getattr(intent, "max_duration_seconds", None)
+            if maximum_duration is not None:
+                stats["max_duration_seconds"] = maximum_duration
+                anchor = execution.get("scheduledFor") or execution.get("startedAt")
+                if anchor:
+                    value = datetime.fromisoformat(str(anchor).replace("Z", "+00:00"))
+                    stats["deadline_at"] = (
+                        value + timedelta(seconds=maximum_duration)
+                    ).isoformat()
             finished = self._now()
             # Cancellation can arrive while synchronous Parquet finalization
             # is in progress.  The file is already durable at this point, so

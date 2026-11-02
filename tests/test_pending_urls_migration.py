@@ -61,8 +61,8 @@ async def test_upgrade_preserves_pending_urls_and_backup(tmp_path, version):
     root = tmp_path / "legacy"
     path, execution_id, before = legacy_database(root, version)
     with Workspace(root) as workspace:
-        assert workspace.state.schema_version == SCHEMA_VERSION == 5
-        assert workspace.state.execute("PRAGMA user_version").fetchone()[0] == 5
+        assert workspace.state.schema_version == SCHEMA_VERSION == 6
+        assert workspace.state.execute("PRAGMA user_version").fetchone()[0] == 6
         after = [dict(row) for row in workspace.state.execute("SELECT * FROM pending_urls")]
         assert after == [dict(row, retry_count=row.get("retry_count", 0)) for row in before]
         names = {row[0] for row in workspace.state.execute("SELECT name FROM sqlite_master")}
@@ -79,7 +79,7 @@ async def test_upgrade_preserves_pending_urls_and_backup(tmp_path, version):
         await queue.push([PendingUrl("https://example.com/new", 0)])
         assert workspace.state.execute("SELECT max(sequence) FROM pending_urls").fetchone()[0] == 41
 
-    backup = path.with_name(f"{path.name}.pre-migration-v{version}-to-v5.backup")
+    backup = path.with_name(f"{path.name}.pre-migration-v{version}-to-v6.backup")
     with closing(sqlite3.connect(backup)) as db:
         db.row_factory = sqlite3.Row
         assert [dict(row) for row in db.execute("SELECT * FROM frontier")] == before
@@ -122,7 +122,7 @@ def test_failed_rename_rolls_back_old_queue_and_version(tmp_path):
 
     state = SQLiteState(path)
     try:
-        assert state.schema_version == 5
+        assert state.schema_version == 6
         assert [dict(row) for row in state.execute("SELECT * FROM pending_urls")] == before
     finally:
         state.close()

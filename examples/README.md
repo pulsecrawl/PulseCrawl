@@ -120,9 +120,13 @@ python -m examples.news.stocks.local --workspace ./live-stock-workspace \
 pulsecrawl -w ./live-stock-workspace schedule start
 ```
 
-Replace the placeholder contact with your own. Schedules are at most hourly;
+Replace the placeholder contact with your own. Schedules may run as often as
+every five minutes;
 setting one authorizes future crawls when a scheduler runs. Each execution
-starts a fresh Pending URLs queue from its seeds. Cases admit at most 1,000 unique URLs per run
+starts a fresh Pending URLs queue from its seeds. Configure
+`max_duration_seconds` when the active crawl should end before the next cron
+boundary; completed records are published when that window expires. Cases
+admit at most 1,000 unique URLs per run
 and use depth six. Jobsearch, Chihuahua, stocks and clothes allow ten million
 lifetime page attempts; the other cases allow one million. Local runners use the case limits
 and a conservative one-request/second policy.

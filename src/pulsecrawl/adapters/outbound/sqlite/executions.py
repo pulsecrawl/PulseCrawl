@@ -14,6 +14,7 @@ class SQLiteExecutionRepository:
 
     @staticmethod
     def _row(row) -> dict[str, Any]:
+        stats = json.loads(row["stats_json"]) if row["stats_json"] else None
         return {
             "executionId": row["execution_id"],
             "jobId": row["job_id"],
@@ -22,7 +23,7 @@ class SQLiteExecutionRepository:
             "trigger": row["trigger"],
             "scheduledFor": row["scheduled_for"],
             "intent": json.loads(row["intent_json"]),
-            "stats": json.loads(row["stats_json"]) if row["stats_json"] else None,
+            "stats": stats,
             "error": row["error"],
             "reservedUrls": row["reserved_urls"],
             "createdAt": row["created_at"],
@@ -30,6 +31,8 @@ class SQLiteExecutionRepository:
             "finishedAt": row["finished_at"],
             "cancellationRequestedAt": row["cancellation_requested_at"],
             "cancellationMode": row["cancellation_mode"],
+            "stopReason": stats.get("stop_reason") if stats else None,
+            "pendingUrlsAtClose": stats.get("pending_urls_at_close") if stats else None,
         }
 
     def list(self, job_id: str | None = None) -> list[dict[str, Any]]:
@@ -107,13 +110,22 @@ class SQLiteExecutionRepository:
                     execution_id,
                 ),
             )
+            time_limited = bool(
+                stats and stats.get("stop_reason") == "time_limit_reached"
+            )
+            pending_status = "skipped" if time_limited else "failed"
+            pending_error = (
+                "execution time limit reached before URL completion"
+                if time_limited
+                else f"execution ended as {status} before URL completion"
+            )
             db.execute(
                 """
-                UPDATE visited SET status='failed',
+                UPDATE visited SET status=?,
                   error=coalesce(error,?)
                 WHERE execution_id=? AND status='queued'
                 """,
-                (f"execution ended as {status} before URL completion", execution_id),
+                (pending_status, pending_error, execution_id),
             )
             db.execute("DELETE FROM pending_urls WHERE execution_id=?", (execution_id,))
             if discard_staged:
@@ -139,6 +151,7 @@ class SQLiteExecutionRepository:
         max_depth: int | None = None,
         store_raw_pages: bool | None = None,
         publish_records: bool = True,
+        max_duration_seconds: float | None = None,
     ) -> dict[str, Any]:
         """Atomically freeze an intent and reserve its lifetime budget.
 
@@ -177,6 +190,7 @@ class SQLiteExecutionRepository:
                 max_depth=max_depth,
                 store_raw_pages=store_raw_pages,
                 publish_records=publish_records,
+                max_duration_seconds=max_duration_seconds,
             )
             db.execute(
                 "UPDATE jobs SET urls_reserved=urls_reserved+? WHERE job_id=?",
