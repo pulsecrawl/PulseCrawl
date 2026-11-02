@@ -12,7 +12,7 @@ REPOSITORY = "pulsecrawl/PulseCrawl"
 WORKFLOW = ".github/workflows/oss-ci.yml"
 REQUIRED_JOBS = {
     *(f"Python {version} on {system}" for version in ("3.11", "3.12", "3.13", "3.14")
-      for system in ("ubuntu-latest", "macos-latest", "windows-latest")),
+      for system in ("ubuntu-latest", "macos-15-intel", "windows-latest")),
     "Declared minimum dependencies",
     "Rootless hardened container acceptance",
     "distribution",

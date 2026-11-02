@@ -55,6 +55,8 @@ class IntentMapper:
                         else None
                     ),
                     origin=t.get("origin", "org"),
+                    page_role=t.get("pageRole", "record"),
+                    required_fields=tuple(t.get("requiredFields") or ()),
                 )
                 for t in raw_templates
             ),
@@ -74,6 +76,8 @@ class IntentMapper:
                         else None
                     ),
                     origin="system",
+                    page_role=t.get("pageRole", "record"),
+                    required_fields=tuple(t.get("requiredFields") or ()),
                 )
                 for t in raw_system_templates
             ),

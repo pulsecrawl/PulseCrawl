@@ -91,6 +91,9 @@ def start_workers(
     gate: Path,
     *,
     timeout: float = 20,
+    ready_paths: list[Path] | None = None,
+    release_path: Path | None = None,
+    release_after_results: int = 0,
 ) -> list[dict[str, object]]:
     processes = [
         subprocess.Popen(
@@ -107,7 +110,23 @@ def start_workers(
         )
         for arguments in argument_sets
     ]
+    if ready_paths is not None:
+        deadline = time.monotonic() + timeout
+        while not all(path.exists() for path in ready_paths):
+            assert all(process.poll() is None for process in processes)
+            if time.monotonic() >= deadline:
+                pytest.fail("worker processes did not reach the start gate")
+            time.sleep(0.01)
     gate.write_text("go", encoding="utf-8")
+    if release_path is not None:
+        deadline = time.monotonic() + timeout
+        while (
+            sum(Path(arguments[-1]).exists() for arguments in argument_sets)
+            < release_after_results
+            and time.monotonic() < deadline
+        ):
+            time.sleep(0.01)
+        release_path.touch()
     reports = []
     for process, arguments in zip(processes, argument_sets):
         stdout, stderr = process.communicate(timeout=timeout)
@@ -177,18 +196,25 @@ Path(result_path).write_text(json.dumps(report), encoding="utf-8")
 
 def test_simultaneous_scheduler_processes_have_one_owner(workspace, tmp_path):
     gate = tmp_path / "scheduler.gate"
+    release = tmp_path / "scheduler.release"
     results = [tmp_path / f"scheduler-{index}.json" for index in range(4)]
+    ready = [Path(f"{result}.ready") for result in results]
     script = r"""
 import json, sys, threading, time
 from pathlib import Path
 from pulsecrawl import Workspace
 from pulsecrawl.errors import WorkspaceBusyError
 
-workspace_path, result_path, gate_path = sys.argv[1:]
+workspace_path, release_path, result_path, gate_path = sys.argv[1:]
+Path(f"{result_path}.ready").touch()
 while not Path(gate_path).exists():
     time.sleep(0.005)
 stop = threading.Event()
-threading.Timer(0.75, stop.set).start()
+def stop_after_contenders_finish():
+    while not Path(release_path).exists():
+        time.sleep(0.005)
+    stop.set()
+threading.Thread(target=stop_after_contenders_finish, daemon=True).start()
 try:
     with Workspace(workspace_path) as workspace:
         workspace.schedules.serve(poll_seconds=0.05, shutdown_event=stop)
@@ -200,8 +226,11 @@ Path(result_path).write_text(json.dumps(report), encoding="utf-8")
 """
     reports = start_workers(
         script,
-        [(workspace.path, result) for result in results],
+        [(workspace.path, release, result) for result in results],
         gate,
+        ready_paths=ready,
+        release_path=release,
+        release_after_results=3,
     )
     assert [report["outcome"] for report in reports].count("owner") == 1
     assert [report["outcome"] for report in reports].count("busy") == 3

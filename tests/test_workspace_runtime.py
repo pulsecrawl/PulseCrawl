@@ -244,6 +244,72 @@ def test_directory_catalog_can_define_schema_template_and_job(workspace):
         )
 
 
+def test_legacy_template_without_page_classification_remains_idempotent(workspace):
+    title = workspace.fields.create("headline", "string", field_id="fld_headline")
+    schema = workspace.schemas.create(
+        "article", [title["fieldId"]], schema_id="schema_article"
+    )
+    template_path = workspace.path / "templates" / "custom" / "tmpl_legacy.json"
+    template_path.parent.mkdir(parents=True, exist_ok=True)
+    template_path.write_text(
+        json.dumps(
+            {
+                "templateId": "tmpl_legacy",
+                "name": "legacy article",
+                "outputSchemaId": schema["schemaId"],
+                "engine": "css",
+                "mappings": {"fld_headline": ["h1"]},
+                "origin": "org",
+                "createdAt": "2026-01-01T00:00:00+00:00",
+            }
+        )
+    )
+
+    reopened = workspace.templates.create(
+        "legacy article",
+        output_schema_id=schema["schemaId"],
+        engine="css",
+        mappings={"fld_headline": "h1"},
+        template_id="tmpl_legacy",
+    )
+
+    assert reopened["templateId"] == "tmpl_legacy"
+    assert "pageRole" not in reopened
+    assert "requiredFields" not in reopened
+
+
+def test_template_role_and_required_fields_survive_workspace_reopen(tmp_path):
+    root = tmp_path / "classified-pages"
+    with Workspace.init(root, name="classified pages") as workspace:
+        dataset = make_dataset(workspace)
+        template = workspace.templates.create(
+            "article",
+            output_schema_id=dataset["schemaId"],
+            engine="css",
+            mappings={"fld_title": "h1", "fld_url": "link[rel=canonical]@href"},
+            template_id="tmpl_classified_article",
+            page_role="record",
+            required_fields=["fld_title", "fld_url"],
+        )
+        job = workspace.jobs.create(
+            "classified article job",
+            seeds=["https://news.example/"],
+            dataset_id=dataset["datasetId"],
+            templates=[{"templateId": template["templateId"]}],
+        )
+        assert job["templates"][0]["requiredFields"] == [
+            "fld_title",
+            "fld_url",
+        ]
+
+    with Workspace(root) as reopened:
+        [job] = reopened.jobs.list()
+        assert job["templates"][0]["requiredFields"] == [
+            "fld_title",
+            "fld_url",
+        ]
+
+
 def test_append_all_runs_publish_hourly_snapshots_and_query_versions(workspace):
     dataset = make_dataset(workspace)
     job = make_job(workspace, dataset, raw=True)

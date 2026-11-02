@@ -27,6 +27,10 @@ def _template_spec(
         mappings=TemplateSpec.normalize_mappings(value["mappings"]),
         scope=scope,
         origin="system" if origin == "system" else "org",
+        page_role=value.get("pageRole", value.get("page_role", "record")),
+        required_fields=tuple(
+            value.get("requiredFields") or value.get("required_fields") or ()
+        ),
     )
 
 
@@ -71,6 +75,7 @@ def _page_resolution(
         "url": page.effective_url,
         "role": page.role,
         "matchTier": tier,
+        "pageRole": resolution.winner.page_role if resolution.winner else None,
         "winnerTemplateId": selected[0][0].template_id if selected else None,
         "matchedTemplateIds": [template.template_id for template, _rows in selected],
         "applicableAuthoredMatchIds": [
@@ -145,7 +150,7 @@ def validate_template_stack(
         item["matchTier"] in ("scoped", "stack_fallback") for item in positives
     )
     negative_matches = [
-        item["url"] for item in negatives if item["matchTier"] is not None
+        item["url"] for item in negatives if item["pageRole"] == "record"
     ]
     contamination = [
         {"url": item["url"], "templateIds": item["outsideScopeMatches"]}

@@ -111,7 +111,11 @@ with Workspace.init("./my-crawls") as pc:
         "hourly news",
         seeds=["https://example.com/news"],
         dataset_id=dataset["datasetId"],
-        templates=[{"engine": "css", "mappings": {"title": "h1"}}],
+        templates=[{
+            "engine": "css",
+            "mappings": {"title": "article h1"},
+            "requiredFields": ["title"],
+        }],
         scope={
             "maxDepth": 6,
             "maxUrlsPerExecution": 1_000,
@@ -137,6 +141,32 @@ the deadline are published normally. Scheduled starts remain aligned to cron
 boundaries, executions for one job never overlap, and expired occurrences are
 recorded and skipped rather than launched as catch-up bursts. Five minutes is
 the shortest supported cadence.
+
+### Crawl broadly, publish only target records
+
+`requiredFields` are a positive content check for a template. PulseCrawl still
+fetches a page and follows its in-scope links when those fields are missing,
+but it does not publish a dataset row for that page. This lets a job start from
+a home or listing page without treating that navigation page as an article or
+product.
+
+```python
+templates = [{
+    "engine": "jsonld",
+    "mappings": {
+        "name": "Product.name",
+        "price": "Product.offers.price",
+    },
+    "requiredFields": ["name", "price"],
+}]
+```
+
+Most jobs need only target record templates. When an operator wants explicit
+diagnostics for a known listing layout, a template can set
+`"pageRole": "navigation"`. A matching navigation template suppresses record
+fallbacks while link discovery continues. `ignore` behaves the same for
+publication and is useful for known non-record pages. Existing templates omit
+both settings and keep the earlier any-nonempty-field behavior.
 
 The workspace is one copyable directory. JSON definitions and Parquet
 outputs are human-owned; `state/pulsecrawl.sqlite` supplies transactional

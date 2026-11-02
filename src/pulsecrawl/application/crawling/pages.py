@@ -194,7 +194,7 @@ class CrawlPageProcessor:
             )
 
         source_url = normalize_url(result.final_url) or item.url
-        records, match_tier = self._records.extract(
+        records, resolution = self._records.extract(
             intent,
             extractors,
             system_extractors,
@@ -202,7 +202,7 @@ class CrawlPageProcessor:
             source_url,
             result.fetched_at,
         )
-        self._record_template_coverage(stats, source_url, match_tier)
+        self._record_template_coverage(stats, source_url, resolution)
         if records:
             stats.records_extracted += len(records)
             await self._p.records.emit(records)
@@ -218,8 +218,10 @@ class CrawlPageProcessor:
         await self._mark(intent, hashed, item, "fetched", None)
 
     @staticmethod
-    def _record_template_coverage(stats, source_url, match_tier) -> None:
+    def _record_template_coverage(stats, source_url, resolution) -> None:
         host = host_of(source_url)
+        match_tier = resolution.match_tier
+        page_role = resolution.winner.page_role if resolution.winner else None
         coverage = stats.template_coverage.setdefault(
             host,
             {
@@ -227,10 +229,25 @@ class CrawlPageProcessor:
                 "stackFallbackMatches": 0,
                 "systemFallbackMatches": 0,
                 "unmatchedPages": 0,
+                "recordPages": 0,
+                "authoredRecordPages": 0,
+                "navigationPages": 0,
+                "ignoredPages": 0,
                 "needsTemplate": False,
                 "sampleUrls": [],
+                "suppressedSampleUrls": [],
             },
         )
+        # A parked execution can resume after a package upgrade with coverage
+        # counters written by an older release.
+        for name, default in (
+            ("recordPages", 0),
+            ("authoredRecordPages", 0),
+            ("navigationPages", 0),
+            ("ignoredPages", 0),
+            ("suppressedSampleUrls", []),
+        ):
+            coverage.setdefault(name, default)
         key = {
             "scoped": "scopedMatches",
             "stack_fallback": "stackFallbackMatches",
@@ -238,6 +255,22 @@ class CrawlPageProcessor:
             None: "unmatchedPages",
         }[match_tier]
         coverage[key] += 1
+        role_key = {
+            "record": "recordPages",
+            "navigation": "navigationPages",
+            "ignore": "ignoredPages",
+            None: None,
+        }[page_role]
+        if role_key is not None:
+            coverage[role_key] += 1
+        if page_role == "record" and match_tier in ("scoped", "stack_fallback"):
+            coverage["authoredRecordPages"] += 1
+        if page_role in ("navigation", "ignore"):
+            if (
+                len(coverage["suppressedSampleUrls"]) < 5
+                and source_url not in coverage["suppressedSampleUrls"]
+            ):
+                coverage["suppressedSampleUrls"].append(source_url)
         if match_tier in ("system_fallback", None):
             if (
                 len(coverage["sampleUrls"]) < 5
@@ -249,7 +282,7 @@ class CrawlPageProcessor:
         # system fallback; the host needs a template only when no authored
         # entry has matched anywhere in the execution.
         coverage["needsTemplate"] = (
-            coverage["scopedMatches"] + coverage["stackFallbackMatches"] == 0
+            coverage["authoredRecordPages"] == 0
             and coverage["systemFallbackMatches"] + coverage["unmatchedPages"] > 0
         )
 

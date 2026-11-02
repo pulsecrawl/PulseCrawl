@@ -233,6 +233,11 @@ class WorkspaceSyncPlanner:
                     for field_id, expression in template["mappings"].items()
                     if field_map[str(field_id)] is not None
                 }
+                mapped_required_fields = [
+                    field_map[str(field_id)]
+                    for field_id in template.get("requiredFields", ())
+                    if field_map[str(field_id)] is not None
+                ]
                 if schema_id is None or len(mapped_fields) != len(template["mappings"]):
                     conflict(
                         "template",
@@ -243,6 +248,10 @@ class WorkspaceSyncPlanner:
                     existing.get("outputSchemaId") != schema_id
                     or existing.get("engine") != template.get("engine")
                     or existing.get("mappings") != mapped_fields
+                    or existing.get("pageRole", "record")
+                    != template.get("pageRole", "record")
+                    or list(existing.get("requiredFields", ()))
+                    != mapped_required_fields
                 ):
                     conflict(
                         "template",

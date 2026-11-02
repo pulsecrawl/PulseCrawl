@@ -98,7 +98,10 @@ class JobService:
                         "origin": "system" if system else "org",
                     }
                     normalized = _templates([merged])[0]
-                    unknown = sorted(set(normalized["mappings"]) - field_ids)
+                    unknown = sorted(
+                        (set(normalized["mappings"]) | set(normalized.get("requiredFields", ())))
+                        - field_ids
+                    )
                     if unknown:
                         raise ValueError(
                             "template mappings reference fields outside the dataset schema: "
@@ -114,7 +117,10 @@ class JobService:
                         }
                     ]
                 )[0]
-                unknown = sorted(set(normalized["mappings"]) - field_ids)
+                unknown = sorted(
+                    (set(normalized["mappings"]) | set(normalized.get("requiredFields", ())))
+                    - field_ids
+                )
                 if unknown:
                     raise ValueError(
                         "template mappings reference fields outside the dataset schema: "
@@ -128,6 +134,16 @@ class JobService:
                         "engine": normalized["engine"],
                         "mappings": normalized["mappings"],
                         "origin": normalized["origin"],
+                        **(
+                            {"pageRole": normalized["pageRole"]}
+                            if "pageRole" in normalized
+                            else {}
+                        ),
+                        **(
+                            {"requiredFields": normalized["requiredFields"]}
+                            if normalized.get("requiredFields")
+                            else {}
+                        ),
                     }
                 )
                 resolved.append(normalized)

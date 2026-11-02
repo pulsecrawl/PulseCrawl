@@ -92,6 +92,21 @@ class TemplateAuthoringService:
                 raise ValueError(
                     "draft mappings must be non-empty and reference only schema fields"
                 )
+            page_role = str(
+                raw.get("page_role") or raw.get("pageRole") or "record"
+            )
+            if page_role not in ("record", "navigation", "ignore"):
+                raise ValueError("unsupported template page role")
+            required_fields = [
+                str(value)
+                for value in (
+                    raw.get("required_fields") or raw.get("requiredFields") or ()
+                )
+            ]
+            if len(set(required_fields)) != len(required_fields):
+                raise ValueError("required template fields must be unique")
+            if any(field_id not in mappings for field_id in required_fields):
+                raise ValueError("required template fields must exist in mappings")
             nested = raw.get("scope") or {}
             hosts = raw.get("hosts", nested.get("hosts")) or ()
             patterns = (
@@ -136,6 +151,10 @@ class TemplateAuthoringService:
                 "engine": raw["engine"],
                 "mappings": mappings,
             }
+            if page_role != "record" or "pageRole" in raw or "page_role" in raw:
+                entry["pageRole"] = page_role
+            if required_fields:
+                entry["requiredFields"] = required_fields
             if hosts or patterns:
                 entry["scope"] = {
                     **({"hosts": list(hosts)} if hosts else {}),
@@ -279,9 +298,15 @@ class TemplateAuthoringService:
                 engine=str(entry["engine"]),
                 mappings=entry["mappings"],
                 template_id=template_id,
+                page_role=str(entry.get("pageRole", "record")),
+                required_fields=list(entry.get("requiredFields") or ()),
             )
             promoted.append(template)
             stack_entry = {"templateId": template["templateId"]}
+            if entry.get("pageRole", "record") != "record":
+                stack_entry["pageRole"] = entry["pageRole"]
+            if entry.get("requiredFields"):
+                stack_entry["requiredFields"] = entry["requiredFields"]
             if entry.get("scope"):
                 stack_entry["scope"] = entry["scope"]
             stack.append(stack_entry)
@@ -294,6 +319,10 @@ class TemplateAuthoringService:
         result = []
         for template_id, entry in zip(draft.promoted_template_ids, draft.templates):
             item: dict[str, Any] = {"templateId": template_id}
+            if entry.get("pageRole", "record") != "record":
+                item["pageRole"] = entry["pageRole"]
+            if entry.get("requiredFields"):
+                item["requiredFields"] = entry["requiredFields"]
             if entry.get("scope"):
                 item["scope"] = entry["scope"]
             result.append(item)
@@ -312,6 +341,8 @@ class TemplateAuthoringService:
             "templateId": f"repair-{template_id}",
             "engine": active["engine"],
             "mappings": active["mappings"],
+            "pageRole": active.get("pageRole", "record"),
+            "requiredFields": active.get("requiredFields", []),
         }
         if scope:
             entry["scope"] = dict(scope)

@@ -108,6 +108,8 @@ class TemplateService(CatalogService):
         mappings: Mapping[str, Any],
         template_id: str | None = None,
         origin: str = "custom",
+        page_role: str = "record",
+        required_fields: tuple[str, ...] | list[str] = (),
     ) -> dict[str, Any]:
         if not name.strip() or len(name) > 256:
             raise ValueError("template name must contain between 1 and 256 characters")
@@ -123,6 +125,8 @@ class TemplateService(CatalogService):
                     "engine": engine,
                     "mappings": mappings,
                     "origin": "system" if origin == "system" else "org",
+                    "pageRole": page_role,
+                    "requiredFields": list(required_fields),
                 }
             ]
         )[0]
@@ -133,6 +137,16 @@ class TemplateService(CatalogService):
             "engine": engine,
             "mappings": normalized["mappings"],
             "origin": "system" if origin == "system" else "org",
+            **(
+                {"pageRole": normalized["pageRole"]}
+                if "pageRole" in normalized
+                else {}
+            ),
+            **(
+                {"requiredFields": normalized["requiredFields"]}
+                if normalized.get("requiredFields")
+                else {}
+            ),
             "createdAt": self._now(),
         }
         try:
@@ -147,7 +161,13 @@ class TemplateService(CatalogService):
             "mappings",
             "origin",
         )
-        if all(existing.get(key) == value.get(key) for key in comparable):
+        if (
+            all(existing.get(key) == value.get(key) for key in comparable)
+            and existing.get("pageRole", "record")
+            == value.get("pageRole", "record")
+            and list(existing.get("requiredFields", ()))
+            == list(value.get("requiredFields", ()))
+        ):
             return existing
         raise ValueError(
             f"{value['templateId']} already exists with different contents"

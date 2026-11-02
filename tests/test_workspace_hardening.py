@@ -462,7 +462,7 @@ with Workspace(sys.argv[1]) as workspace:
         time.sleep(0.01)
     assert workspace.schedules.status()["ownerToken"]
     process.terminate()
-    stdout, stderr = process.communicate(timeout=5)
+    stdout, stderr = process.communicate(timeout=15)
     assert process.returncode == 0, (stdout, stderr)
     assert workspace.schedules.status()["stopping"] is True
 

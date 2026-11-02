@@ -763,6 +763,105 @@ class TestCrawlEndToEnd:
 class TestTemplateStacks:
     """Multiple templates per job: first match wins, later ones enrich."""
 
+    async def test_required_fields_suppress_navigation_page_but_discovery_continues(
+        self, ports
+    ):
+        from pulsecrawl.core.model import TemplateSpec
+
+        ports.fetcher.add(
+            "https://shop.example/",
+            '<h1>Products</h1><a href="/products/one">one</a>',
+        )
+        ports.fetcher.add(
+            "https://shop.example/products/one",
+            '<h1>One</h1><span class="price">9</span>',
+        )
+        intent = make_intent(
+            mappings={"fld_title": "h1", "fld_price": ".price"},
+            extra_templates=(),
+        )
+        strict = TemplateSpec(
+            template_id=intent.templates[0].template_id,
+            engine="css",
+            mappings=intent.templates[0].mappings,
+            required_fields=("fld_title", "fld_price"),
+        )
+        intent = intent.__class__(
+            **{**intent.__dict__, "templates": (strict,)}
+        )
+
+        engine = CrawlEngine(ports)
+        await engine.seed(intent)
+        outcome = await engine.run(intent)
+
+        [record] = ports.records.records
+        assert record.fields == {"title": "One", "price": 9.0}
+        assert outcome.stats.pages_fetched == 2
+        assert outcome.stats.template_coverage["shop.example"]["unmatchedPages"] == 1
+
+    async def test_navigation_template_suppresses_output_and_generic_fallback(
+        self, ports
+    ):
+        from pulsecrawl.core.model import TemplateSpec
+
+        ports.fetcher.add(
+            "https://shop.example/",
+            '<h1>Products</h1><meta property="og:title" content="Shop">',
+        )
+        navigation = TemplateSpec(
+            template_id="tmpl_navigation",
+            engine="css",
+            mappings=TemplateSpec.normalize_mappings({"fld_title": "h1"}),
+            page_role="navigation",
+        )
+        system = TemplateSpec(
+            template_id="tmpl_system_meta",
+            engine="meta",
+            mappings=TemplateSpec.normalize_mappings({"fld_title": "og:title"}),
+            origin="system",
+        )
+        intent = make_intent(
+            mappings={"fld_title": ".product-title"},
+            extra_templates=(navigation,),
+            system_templates=(system,),
+        )
+
+        engine = CrawlEngine(ports)
+        await engine.seed(intent)
+        outcome = await engine.run(intent)
+
+        assert ports.records.records == []
+        coverage = outcome.stats.template_coverage["shop.example"]
+        assert coverage["navigationPages"] == 1
+        assert coverage["systemFallbackMatches"] == 0
+        assert coverage["suppressedSampleUrls"] == ["https://shop.example/"]
+
+    async def test_required_field_coercion_failure_suppresses_record(self, ports):
+        from pulsecrawl.core.model import TemplateSpec
+
+        ports.fetcher.add(
+            "https://shop.example/",
+            '<h1>One</h1><span class="price">call us</span>',
+        )
+        strict = TemplateSpec(
+            template_id="tmpl_product",
+            engine="css",
+            mappings=TemplateSpec.normalize_mappings(
+                {"fld_title": "h1", "fld_price": ".price"}
+            ),
+            required_fields=("fld_title", "fld_price"),
+        )
+        intent = make_intent(mappings={"fld_title": ".missing"})
+        intent = intent.__class__(
+            **{**intent.__dict__, "templates": (strict,)}
+        )
+
+        engine = CrawlEngine(ports)
+        await engine.seed(intent)
+        await engine.run(intent)
+
+        assert ports.records.records == []
+
     async def test_fallback_template_matches_when_primary_does_not(self, ports):
         from pulsecrawl.core.model import TemplateSpec
 

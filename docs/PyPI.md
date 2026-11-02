@@ -11,6 +11,8 @@ workspace, and retain the automatic pre-migration backup for downgrades.
 Version `0.3.0` adds successful time-bounded executions, five-minute-or-slower
 fixed schedules, non-overlap and skipped-occurrence accounting, and upgrades
 workspace SQLite state to schema 6.
+Version `0.4.0` separates broad link discovery from record publication with
+template `requiredFields` and optional record, navigation, or ignore page roles.
 Preparation is not
 publication: no account, publisher, GitHub environment, tag, or upload is
 created by these local files.

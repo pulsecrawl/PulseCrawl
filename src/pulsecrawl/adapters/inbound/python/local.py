@@ -33,9 +33,11 @@ def crawl(
     """Crawl synchronously and return typed records.
 
     Pass either one legacy ``engine`` + ``mappings`` pair or an ordered
-    ``templates`` stack. Stack entries accept ``template_id``, ``hosts``, and
-    ``url_patterns`` (or their API camelCase forms). ``system_templates`` are
-    attempted only when the complete authored stack produces no values.
+    ``templates`` stack. Stack entries accept ``template_id``, URL scope,
+    ``required_fields``, and an optional ``page_role``. Required fields turn a
+    template into a positive content check: pages that do not contain them are
+    still crawled for links but do not publish a row. ``system_templates`` are
+    attempted only when the complete authored stack produces no match.
 
     `dataset` is a folder path: results accumulate there run after run, in
     the same layout the hosted product uses,
@@ -75,6 +77,14 @@ def crawl(
             }
             if entry.get("origin") is not None:
                 item["origin"] = entry["origin"]
+            page_role = entry.get("page_role", entry.get("pageRole"))
+            if page_role is not None:
+                item["pageRole"] = page_role
+            required_fields = entry.get(
+                "required_fields", entry.get("requiredFields")
+            )
+            if required_fields:
+                item["requiredFields"] = list(required_fields)
             if hosts or patterns:
                 item["scope"] = {
                     **({"hosts": list(hosts)} if hosts else {}),

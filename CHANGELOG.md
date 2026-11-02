@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0
+
+- Separate crawling from record publication. Template `requiredFields` act as
+  positive content checks: a fetched page can still contribute discovered
+  links without producing a dataset row when the target fields are absent or
+  fail type conversion.
+- Add optional template `pageRole` values: `record` (the default),
+  `navigation`, and `ignore`. Navigation and ignored pages never publish rows;
+  their links remain available to the normal crawl discovery process.
+- Report per-host record, navigation, ignored, and unmatched page counts with
+  bounded samples of explicitly suppressed pages. Existing templates without
+  the new settings retain their previous behavior.
+
 ## 0.3.0
 
 - Add successful time-bounded workspace executions. `jobs.create`, `jobs.run`,
