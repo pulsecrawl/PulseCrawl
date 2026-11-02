@@ -160,10 +160,14 @@ class TemplateService(CatalogService):
             "engine",
             "mappings",
             "origin",
-            "pageRole",
-            "requiredFields",
         )
-        if all(existing.get(key) == value.get(key) for key in comparable):
+        if (
+            all(existing.get(key) == value.get(key) for key in comparable)
+            and existing.get("pageRole", "record")
+            == value.get("pageRole", "record")
+            and list(existing.get("requiredFields", ()))
+            == list(value.get("requiredFields", ()))
+        ):
             return existing
         raise ValueError(
             f"{value['templateId']} already exists with different contents"
