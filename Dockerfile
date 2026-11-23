@@ -1,4 +1,4 @@
-FROM python:3.13.16-slim-bookworm@sha256:55e31428469cbd0e20d52b2b514e8ec20ca4742254ed2b9dbe0f0b2d39cc2d65
+FROM python:3.15.2-slim-bookworm@sha256:96599df822d0e1c6bb700014a05c7f3c8cabc6e0f7ff3c4f9f69cee033b4b5d9
 
 LABEL org.opencontainers.image.source="https://github.com/pulsecrawl/PulseCrawl" \
       org.opencontainers.image.description="PulseCrawl local workspace scheduler" \
